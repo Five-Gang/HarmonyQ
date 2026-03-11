@@ -18,6 +18,8 @@
     "jwks-rsa": "^3.1.0",
     "melodai-microservices": "file:../..",
     "morgan": "^1.10.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.13.0"
   },
   "devDependencies": {

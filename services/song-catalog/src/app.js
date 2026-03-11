@@ -4,6 +4,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const path = require('path');
 
 const connectDB = require('./config/database');
 const logger = require('./config/logger');
@@ -12,6 +15,34 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Song Catalog Service API',
+      version: '1.0.0',
+      description: 'API specifications for the MelodAI Song Catalog microservice.',
+    },
+    servers: [
+      { url: 'http://localhost:3001', description: 'Local Server' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter the valid Clerk JWT token',
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
+  },
+  apis: ['./src/routes/*.js'], // Files containing annotations
+};
+
+const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
 // Security middleware
 app.use(helmet());
@@ -50,6 +81,9 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/songs', songRoutes);
+
+// Swagger API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Error handling
 app.use(notFound);

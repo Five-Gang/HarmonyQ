@@ -4,6 +4,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const path = require('path');
 
 const connectDB = require('./config/database');
 const logger = require('./config/logger');
@@ -13,6 +16,34 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Playlist Service API',
+      version: '1.0.0',
+      description: 'API specifications for the MelodAI Playlist microservice.',
+    },
+    servers: [
+      { url: 'http://localhost:3003', description: 'Local Server' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter the valid Clerk JWT token',
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
+  },
+  apis: ['./src/routes/*.js'],
+};
+
+const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', methods: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
@@ -27,6 +58,11 @@ app.get('/health', (req, res) => {
 
 app.use('/playlists', playlistRoutes);
 app.use('/users', userPlaylistRoutes);
+// Also mount at /playlists/users so the Vite proxy path (/api/playlists/users/*) resolves correctly
+app.use('/playlists/users', userPlaylistRoutes);
+
+// Swagger API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 app.use(notFound);
 app.use(errorHandler);

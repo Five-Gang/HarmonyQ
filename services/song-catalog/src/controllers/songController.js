@@ -1,5 +1,7 @@
 const songService = require('../services/songService');
 const logger = require('../config/logger');
+const { uploadToCloudinary } = require('../config/cloudinary');
+const { uploadToGCS } = require('../config/gcs');
 
 class SongController {
   /**
@@ -49,7 +51,46 @@ class SongController {
    */
   async createSong(req, res, next) {
     try {
-      const song = await songService.createSong(req.body);
+      let coverUrl = req.body.coverUrl;
+      let songUrl = req.body.songUrl;
+
+      // 1. Upload cover image to Cloudinary if provided
+      if (req.files && req.files.coverImage && req.files.coverImage[0]) {
+        const coverFile = req.files.coverImage[0];
+        const result = await uploadToCloudinary(coverFile.buffer, 'image', 'covers');
+        coverUrl = result.secure_url;
+      }
+
+      // 2. Upload MP3 to Google Cloud Storage if provided
+      if (req.files && req.files.audioFile && req.files.audioFile[0]) {
+        const audioFile = req.files.audioFile[0];
+        
+        // Ensure GCS bucket env var is set, or it will use default
+        songUrl = await uploadToGCS(
+          audioFile.buffer,
+          audioFile.originalname,
+          'songs',
+          audioFile.mimetype
+        );
+      }
+
+      // Build song payload
+      const songData = {
+        ...req.body,
+        coverUrl: coverUrl,
+        songUrl: songUrl,
+      };
+
+      // Since the frontend sends 'genre' as a string in formData when multiple, parse array if it's a string
+      if (typeof songData.genre === 'string') {
+        try {
+          songData.genre = JSON.parse(songData.genre);
+        } catch (e) {
+          songData.genre = [songData.genre];
+        }
+      }
+
+      const song = await songService.createSong(songData);
       res.status(201).json({ success: true, data: song, message: 'Song created successfully' });
     } catch (error) {
       next(error);

@@ -28,7 +28,7 @@ function formatDuration(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-const emptySong = { title: '', artist: '', album: '', genre: 'Pop', duration: '', releaseYear: '' };
+const emptySong = { title: '', artist: '', album: '', genre: 'Pop', duration: '', releaseYear: '', audioFile: null, coverImage: null };
 
 export default function AdminSongsPage() {
   const [page, setPage] = useState(1);
@@ -58,12 +58,26 @@ export default function AdminSongsPage() {
 
   const handleCreateSong = async (e) => {
     e.preventDefault();
+    if (!newSong.audioFile) {
+      toast.error('Please select an audio file to upload');
+      return;
+    }
+    
     try {
-      await createSong.mutateAsync({
-        ...newSong,
-        duration: parseInt(newSong.duration),
-        releaseYear: parseInt(newSong.releaseYear),
-      });
+      const formData = new FormData();
+      formData.append('title', newSong.title);
+      formData.append('artist', newSong.artist);
+      formData.append('album', newSong.album);
+      formData.append('genre', newSong.genre); // The backend parser stringifies it
+      formData.append('duration', parseInt(newSong.duration));
+      formData.append('releaseYear', parseInt(newSong.releaseYear));
+      
+      formData.append('audioFile', newSong.audioFile); // The actual MP3 file
+      if (newSong.coverImage) {
+        formData.append('coverImage', newSong.coverImage); // Image picture
+      }
+
+      await createSong.mutateAsync(formData);
       setShowAddModal(false);
       setNewSong({ ...emptySong });
     } catch (err) {
@@ -300,6 +314,31 @@ export default function AdminSongsPage() {
                 onChange={(e) => setNewSong((s) => ({ ...s, releaseYear: e.target.value }))}
               />
             </FormField>
+            <FormField label="Audio File (.mp3/.wav) *" id="admin-audio">
+              <div className="flex flex-col gap-2">
+                <input
+                  id="admin-audio"
+                  type="file"
+                  accept="audio/*"
+                  className="input !p-2 cursor-pointer text-sm"
+                  required
+                  onChange={(e) => setNewSong((s) => ({ ...s, audioFile: e.target.files[0] }))}
+                />
+                {newSong.audioFile && <span className="text-xs text-brand-400">Selected: {newSong.audioFile.name}</span>}
+              </div>
+            </FormField>
+            <FormField label="Cover Image" id="admin-cover">
+              <div className="flex flex-col gap-2">
+                <input
+                  id="admin-cover"
+                  type="file"
+                  accept="image/*"
+                  className="input !p-2 cursor-pointer text-sm"
+                  onChange={(e) => setNewSong((s) => ({ ...s, coverImage: e.target.files[0] }))}
+                />
+                {newSong.coverImage && <span className="text-xs text-brand-400">Selected: {newSong.coverImage.name}</span>}
+              </div>
+            </FormField>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -312,9 +351,9 @@ export default function AdminSongsPage() {
               className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-accent-500 hover:from-brand-600 hover:to-accent-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-glow active:scale-95 disabled:opacity-50"
             >
               {createSong.isPending ? (
-                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating...</>
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading...</>
               ) : (
-                <><Plus className="w-4 h-4" /> Create Song</>
+                <><Download className="w-4 h-4" /> Upload Song</>
               )}
             </button>
           </div>
