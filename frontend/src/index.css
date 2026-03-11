@@ -141,20 +141,262 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Clerk component overrides */
-.cl-formButtonPrimary {
-  background-color: #2b4ef7 !important;
+/* ─── Clerk Component Overrides ─── */
+
+/* Card container — transparent since we use external card wrapper */
+.cl-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.cl-cardBox {
+  box-shadow: none !important;
+}
+
+/* Headers */
+.cl-headerTitle,
+.cl-headerSubtitle {
+  color: #e2e8f0 !important;
+}
+
+/* Form fields */
+.cl-formFieldLabel {
+  color: #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+}
+.cl-formFieldInput,
+.cl-phoneNumberInput,
+.clerk-input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: #f1f5f9 !important;
+  padding: 12px 14px !important;
+  transition: all 0.2s ease !important;
+  font-size: 0.95rem !important;
+}
+.cl-formFieldInput:focus,
+.cl-phoneNumberInput:focus,
+.clerk-input:focus {
+  border-color: #4d73fd !important;
+  box-shadow: 0 0 0 3px rgba(77, 115, 253, 0.18) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.cl-formFieldInput::placeholder {
+  color: #64748b !important;
+}
+
+/* Primary button */
+.cl-formButtonPrimary,
+.clerk-primary-btn {
+  background: linear-gradient(135deg, #2b4ef7 0%, #4d73fd 50%, #6d8eff 100%) !important;
+  border-radius: 12px !important;
+  padding: 13px 24px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border: none !important;
+  box-shadow: 0 4px 24px rgba(43, 78, 247, 0.3), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+  transition: all 0.25s ease !important;
+  letter-spacing: 0.01em !important;
+}
+.cl-formButtonPrimary:hover,
+.clerk-primary-btn:hover {
+  box-shadow: 0 6px 32px rgba(43, 78, 247, 0.45), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  transform: translateY(-1px) !important;
+}
+.cl-formButtonPrimary:active,
+.clerk-primary-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* Social buttons */
+.cl-socialButtonsBlockButton,
+.clerk-social-btn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  transition: all 0.2s ease !important;
+}
+.cl-socialButtonsBlockButton:hover,
+.clerk-social-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+.cl-socialButtonsBlockButtonText {
+  color: #e2e8f0 !important;
+  font-weight: 500 !important;
+}
+.cl-socialButtonsProviderIcon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Divider */
+.cl-dividerLine {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+.cl-dividerText {
+  color: #64748b !important;
+  font-size: 0.75rem !important;
+}
+
+/* Footer — blend into card */
+.cl-footer {
+  background: transparent !important;
+  border: none !important;
+  padding-bottom: 0 !important;
+}
+.cl-footerAction {
+  background: transparent !important;
 }
 .cl-footerActionLink {
   color: #4d73fd !important;
+  font-weight: 500 !important;
 }
-.cl-card {
-  background: #16162a !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+.cl-footerActionLink:hover {
+  color: #6d8eff !important;
 }
-.cl-headerTitle {
+.cl-footerActionText {
+  color: #94a3b8 !important;
+}
+
+/* Powered by / secured by */
+.cl-footerPages,
+.cl-internal-1dauvt6 {
+  opacity: 0.5 !important;
+}
+
+/* Identity preview (shown after first step) */
+.cl-identityPreview {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+}
+.cl-identityPreviewText {
   color: #e2e8f0 !important;
 }
-.cl-socialButtonsBlockButtonText {
-  color: #cbd5e1 !important;
+.cl-identityPreviewEditButton {
+  color: #4d73fd !important;
 }
+
+/* OTP code fields */
+.cl-otpCodeFieldInput {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  color: #f1f5f9 !important;
+}
+
+/* Alerts */
+.cl-alert {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+  border-radius: 12px !important;
+}
+.cl-alert__text,
+.cl-alertText {
+  color: #fca5a5 !important;
+}
+
+/* Links and actions */
+.cl-formFieldAction {
+  color: #4d73fd !important;
+}
+.cl-formFieldAction:hover {
+  color: #6d8eff !important;
+}
+
+/* Show/hide password */
+.cl-formFieldInputShowPasswordButton {
+  color: #94a3b8 !important;
+}
+.cl-formFieldInputShowPasswordButton:hover {
+  color: #e2e8f0 !important;
+}
+
+/* User button */
+.cl-userButtonPopoverCard {
+  background: #16162a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Internal Clerk text overrides */
+.cl-internal-b1z4o2,
+.cl-internal-1hp5nqm {
+  color: #94a3b8 !important;
+}
+
+/* Glass utility */
+.glass {
+  background: rgba(22, 22, 42, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Landing Page Animations ─── */
+
+/* Floating orbs */
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -40px) scale(1.05); }
+  66% { transform: translate(-30px, 30px) scale(0.95); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-50px, 50px) scale(1.08); }
+  66% { transform: translate(40px, -20px) scale(0.92); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -60px) scale(1.06); }
+}
+.animate-orb-1 { animation: orbFloat1 18s ease-in-out infinite; }
+.animate-orb-2 { animation: orbFloat2 22s ease-in-out infinite; }
+.animate-orb-3 { animation: orbFloat3 20s ease-in-out infinite; }
+
+/* Equalizer bounce */
+@keyframes equalizerBounce {
+  0% { height: 12%; }
+  100% { height: 90%; }
+}
+
+/* Floating card */
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.animate-float { animation: floatCard 4s ease-in-out infinite; }
+
+/* Fade in up */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out both;
+}
+
+/* Slow disc spin */
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow { animation: spinSlow 8s linear infinite; }
+
+/* Scroll dot indicator */
+@keyframes scrollDot {
+  0% { transform: translateY(0); opacity: 1; }
+  60% { transform: translateY(12px); opacity: 0.3; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.animate-scroll-dot { animation: scrollDot 1.8s ease-in-out infinite; }
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+

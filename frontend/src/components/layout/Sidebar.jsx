@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useClerk, useUser } from '@clerk/clerk-react';
 import {
   Music2, Home, Search, ListMusic, Star, User, LogOut,
-  ChevronLeft, ChevronRight, Settings, Menu, X
+  ChevronLeft, ChevronRight, Settings, Menu, X, Shield
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -64,6 +64,30 @@ export const Sidebar = () => {
             {!collapsed && <span>{label}</span>}
           </NavLink>
         ))}
+
+        {/* Admin Panel link — only for admins */}
+        {user?.publicMetadata?.roles?.includes('admin') && (
+          <>
+            <div className="mx-1 my-2 border-t border-white/5" />
+            <NavLink
+              to="/admin"
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+                  collapsed ? 'justify-center' : '',
+                  isActive
+                    ? 'bg-red-500/15 text-red-400 border border-red-500/20'
+                    : 'text-red-400/60 hover:bg-red-500/10 hover:text-red-400'
+                )
+              }
+              title={collapsed ? 'Admin Panel' : undefined}
+            >
+              <Shield className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && <span>Admin Panel</span>}
+            </NavLink>
+          </>
+        )}
       </nav>
 
       {/* User */}

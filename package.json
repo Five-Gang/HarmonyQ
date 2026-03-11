@@ -1,0 +1,16 @@
+{
+  "name": "melodai-microservices",
+  "version": "1.0.0",
+  "description": "MelodAI Music Playlist Manager - Microservices Architecture",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix services/song-catalog && npm install --prefix services/user-profile && npm install --prefix services/playlist && npm install --prefix services/recommendation && npm install --prefix frontend",
+    "dev:song-catalog": "npm run dev --prefix services/song-catalog",
+    "dev:user-profile": "npm run dev --prefix services/user-profile",
+    "dev:playlist": "npm run dev --prefix services/playlist",
+    "dev:recommendation": "npm run dev --prefix services/recommendation",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev": "node start-all.js",
+    "setup": "node setup.js"
+  }
+}

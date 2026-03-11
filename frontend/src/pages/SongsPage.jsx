@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Music, Filter, Grid, List, SlidersHorizontal, X } from 'lucide-react';
-import { useSongs, useCreateSong } from '../hooks/useSongs';
+import { useSongs } from '../hooks/useSongs';
 import { useUserPlaylists } from '../hooks/usePlaylists';
 import { useAddSongsToPlaylist } from '../hooks/usePlaylists';
 import { useUser } from '@clerk/clerk-react';
@@ -35,8 +35,6 @@ export default function SongsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState(null);
   const [selectedPlaylist, setSelectedPlaylist] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newSong, setNewSong] = useState({ title: '', artist: '', album: '', genre: 'Pop', duration: '', releaseYear: '' });
 
   const [sortBy, sortOrder] = sort.split('_');
 
@@ -51,7 +49,6 @@ export default function SongsPage() {
 
   const { data: playlistsData } = useUserPlaylists(user?.id);
   const addSongs = useAddSongsToPlaylist();
-  const createSong = useCreateSong();
 
   const songs = data?.songs || [];
   const pagination = data?.pagination;
@@ -65,12 +62,7 @@ export default function SongsPage() {
     setSelectedPlaylist('');
   };
 
-  const handleCreateSong = async (e) => {
-    e.preventDefault();
-    await createSong.mutateAsync({ ...newSong, duration: parseInt(newSong.duration), releaseYear: parseInt(newSong.releaseYear) });
-    setShowAddModal(false);
-    setNewSong({ title: '', artist: '', album: '', genre: 'Pop', duration: '', releaseYear: '' });
-  };
+
 
   const handleSearch = useCallback((val) => { setSearch(val); setPage(1); }, []);
 
@@ -83,11 +75,6 @@ export default function SongsPage() {
           <p className="text-muted mt-1">{pagination?.total?.toLocaleString() || '—'} songs available</p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <button onClick={() => setShowAddModal(true)} className="btn-primary">
-              + Add Song
-            </button>
-          )}
           <button
             onClick={() => setView(v => v === 'grid' ? 'list' : 'grid')}
             className="btn-ghost"
@@ -210,40 +197,6 @@ export default function SongsPage() {
             </div>
           </div>
         )}
-      </Modal>
-
-      {/* Admin: Add Song Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Song">
-        <form onSubmit={handleCreateSong} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Title*" id="title">
-              <input id="title" className="input" required value={newSong.title} onChange={e => setNewSong(s => ({ ...s, title: e.target.value }))} />
-            </FormField>
-            <FormField label="Artist*" id="artist">
-              <input id="artist" className="input" required value={newSong.artist} onChange={e => setNewSong(s => ({ ...s, artist: e.target.value }))} />
-            </FormField>
-            <FormField label="Album" id="album">
-              <input id="album" className="input" value={newSong.album} onChange={e => setNewSong(s => ({ ...s, album: e.target.value }))} />
-            </FormField>
-            <FormField label="Genre*" id="genre">
-              <select id="genre" className="input" value={newSong.genre} onChange={e => setNewSong(s => ({ ...s, genre: e.target.value }))}>
-                {GENRES.map(g => <option key={g}>{g}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Duration (seconds)*" id="duration">
-              <input id="duration" type="number" className="input" required min="1" value={newSong.duration} onChange={e => setNewSong(s => ({ ...s, duration: e.target.value }))} />
-            </FormField>
-            <FormField label="Release Year*" id="year">
-              <input id="year" type="number" className="input" required min="1900" max="2025" value={newSong.releaseYear} onChange={e => setNewSong(s => ({ ...s, releaseYear: e.target.value }))} />
-            </FormField>
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary flex-1">Cancel</button>
-            <button type="submit" disabled={createSong.isPending} className="btn-primary flex-1">
-              {createSong.isPending ? 'Creating...' : 'Create Song'}
-            </button>
-          </div>
-        </form>
       </Modal>
     </div>
   );

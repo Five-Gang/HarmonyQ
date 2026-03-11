@@ -5,8 +5,10 @@ import { setAuthToken } from './lib/apiClient';
 import { useSyncUser } from './hooks/useUser';
 import { AppLayout } from './components/layout/AppLayout.jsx';
 import { PageLoader } from './components/ui/LoadingStates.jsx';
+import { AdminLayout } from './components/layout/AdminLayout.jsx';
 
 // Pages
+import LandingPage from './pages/LandingPage.jsx';
 import SignInPage from './pages/SignInPage.jsx';
 import SignUpPage from './pages/SignUpPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
@@ -15,6 +17,12 @@ import PlaylistsPage from './pages/PlaylistsPage.jsx';
 import PlaylistDetailPage from './pages/PlaylistDetailPage.jsx';
 import RecommendationsPage from './pages/RecommendationsPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+
+// Admin Pages
+import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
+import AdminSongsPage from './pages/admin/AdminSongsPage.jsx';
+import AdminPlaylistsPage from './pages/admin/AdminPlaylistsPage.jsx';
+import AdminUsersPage from './pages/admin/AdminUsersPage.jsx';
 
 /**
  * AuthSync: sets Clerk token on all API clients and syncs user to our backend
@@ -75,7 +83,7 @@ export default function App() {
     <Router>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
 
@@ -86,6 +94,14 @@ export default function App() {
         <Route path="/playlists/:id" element={<ProtectedRoute><PlaylistDetailPage /></ProtectedRoute>} />
         <Route path="/recommendations" element={<ProtectedRoute><RecommendationsPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+        {/* Admin routes — AdminLayout handles its own auth + admin check */}
+        <Route path="/admin" element={<AuthSync><AdminLayout /></AuthSync>}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="songs" element={<AdminSongsPage />} />
+          <Route path="playlists" element={<AdminPlaylistsPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+        </Route>
 
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

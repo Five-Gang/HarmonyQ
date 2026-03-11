@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { dark } from '@clerk/themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
@@ -34,6 +35,18 @@ if (!PUBLISHABLE_KEY) {
         afterSignOutUrl="/"
         signInUrl="/sign-in"
         signUpUrl="/sign-up"
+        appearance={{
+          baseTheme: dark,
+          variables: {
+            colorPrimary: '#4d73fd',
+            colorBackground: '#0f0f1a',
+            colorInputBackground: 'rgba(255, 255, 255, 0.06)',
+            colorInputText: '#f1f5f9',
+            colorText: '#e2e8f0',
+            colorTextSecondary: '#94a3b8',
+            borderRadius: '0.75rem',
+          },
+        }}
       >
         <QueryClientProvider client={queryClient}>
           <App />
