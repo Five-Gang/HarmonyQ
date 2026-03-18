@@ -43,10 +43,27 @@ const authenticate = (req, res, next) => {
       });
     }
 
+    // Clerk can expose publicMetadata via a JWT template.
+    // Try every possible claim path so we are resilient to template variations.
+    const roles =
+      decoded?.publicMetadata?.roles ||      // Clerk default template key name
+      decoded?.public_metadata?.roles ||     // snake_case variant
+      decoded?.metadata?.roles ||            // some custom templates use this
+      (decoded?.role ? [decoded.role] : []) || // single-role shorthand
+      decoded?.roles ||                      // top-level array shorthand
+      [];
+
+    logger.debug('JWT decoded claims', {
+      sub: decoded.sub,
+      publicMetadata: decoded?.publicMetadata,
+      public_metadata: decoded?.public_metadata,
+      roles,
+    });
+
     req.auth = {
       userId: decoded.sub,
       sessionId: decoded.sid,
-      roles: decoded['public_metadata']?.roles || [],
+      roles,
     };
 
     next();

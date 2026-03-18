@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Music, Play, Plus, MoreVertical, Clock, Trash2, Edit } from 'lucide-react';
+import { Music, Play, Pause, Plus, MoreVertical, Clock, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Badge } from '../ui/index.jsx';
 import { useIncrementPlay, useDeleteSong } from '../../hooks/useSongs';
 import { useUser } from '@clerk/clerk-react';
+import { usePlayer } from '../../context/PlayerContext';
 
 const formatDuration = (seconds) => {
   if (!seconds) return '--:--';
@@ -14,25 +15,25 @@ const formatDuration = (seconds) => {
 
 export const SongCard = ({ song, onAddToPlaylist, showActions = true }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const incrementPlay = useIncrementPlay();
   const deleteSong = useDeleteSong();
   const { user } = useUser();
+  const { playSong, currentSong, isPlaying } = usePlayer();
 
   const isAdmin = user?.publicMetadata?.roles?.includes('admin');
+  const isThisSongPlaying = currentSong?._id === song._id && isPlaying;
 
   const handlePlay = () => {
-    setIsPlaying(true);
+    playSong(song);
     incrementPlay.mutate(song._id);
-    setTimeout(() => setIsPlaying(false), 2000);
   };
 
   return (
     <div className="card-hover group relative overflow-hidden">
       {/* Cover Art */}
       <div className="relative h-44 bg-gradient-to-br from-surface-3 to-surface-4 overflow-hidden rounded-t-2xl">
-        {song.coverArt ? (
-          <img src={song.coverArt} alt={song.title} className="w-full h-full object-cover" />
+        {song.coverUrl || song.coverArt ? (
+          <img src={song.coverUrl || song.coverArt} alt={song.title} className="w-full h-full object-cover" />
         ) : (
           <div className="flex items-center justify-center h-full">
             <Music className="w-12 h-12 text-slate-600" />
@@ -46,12 +47,14 @@ export const SongCard = ({ song, onAddToPlaylist, showActions = true }) => {
           onClick={handlePlay}
           className={clsx(
             'absolute bottom-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg',
-            isPlaying
+            isThisSongPlaying
               ? 'bg-brand-500 scale-110 shadow-glow'
               : 'bg-white/10 backdrop-blur opacity-0 group-hover:opacity-100 hover:bg-brand-500 hover:scale-110'
           )}
         >
-          <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+          {isThisSongPlaying
+            ? <Pause className="w-4 h-4 text-white fill-white" />
+            : <Play className="w-4 h-4 text-white fill-white ml-0.5" />}
         </button>
 
         {/* Genre badge */}
@@ -114,12 +117,12 @@ export const SongCard = ({ song, onAddToPlaylist, showActions = true }) => {
 
 export const SongRow = ({ song, index, onAddToPlaylist, onRemove, showIndex = false }) => {
   const incrementPlay = useIncrementPlay();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { playSong, currentSong, isPlaying } = usePlayer();
+  const isThisSongPlaying = currentSong?._id === song._id && isPlaying;
 
   const handlePlay = () => {
-    setIsPlaying(true);
+    playSong(song);
     incrementPlay.mutate(song._id);
-    setTimeout(() => setIsPlaying(false), 2000);
   };
 
   return (
@@ -131,16 +134,18 @@ export const SongRow = ({ song, index, onAddToPlaylist, onRemove, showIndex = fa
         </span>
         <button
           onClick={handlePlay}
-          className={clsx('hidden group-hover:flex items-center justify-center', isPlaying && '!flex')}
+          className={clsx('hidden group-hover:flex items-center justify-center', isThisSongPlaying && '!flex')}
         >
-          <Play className={clsx('w-4 h-4 fill-current', isPlaying ? 'text-brand-400' : 'text-slate-300')} />
+          {isThisSongPlaying
+            ? <Pause className={clsx('w-4 h-4 fill-current text-brand-400')} />
+            : <Play className={clsx('w-4 h-4 fill-current text-slate-300')} />}
         </button>
       </div>
 
       {/* Cover */}
       <div className="w-10 h-10 rounded-lg bg-surface-3 flex-shrink-0 overflow-hidden">
-        {song.coverArt ? (
-          <img src={song.coverArt} alt={song.title} className="w-full h-full object-cover" />
+        {song.coverUrl || song.coverArt ? (
+          <img src={song.coverUrl || song.coverArt} alt={song.title} className="w-full h-full object-cover" />
         ) : (
           <div className="flex items-center justify-center h-full">
             <Music className="w-4 h-4 text-slate-600" />

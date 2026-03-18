@@ -48,9 +48,20 @@ const songSchema = new mongoose.Schema(
       min: [1900, 'Release year must be after 1900'],
       max: [new Date().getFullYear() + 1, 'Release year cannot be in the future'],
     },
+    songUrl: {
+      type: String,
+      default: null,
+      comment: 'Azure Blob Storage URL for the audio file',
+    },
+    coverUrl: {
+      type: String,
+      default: null,
+      comment: 'Cloudinary URL for the cover image',
+    },
     coverArt: {
       type: String,
       default: null,
+      comment: 'Alias for coverUrl (legacy)',
     },
     playCount: {
       type: Number,

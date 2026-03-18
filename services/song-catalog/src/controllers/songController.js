@@ -1,7 +1,7 @@
 const songService = require('../services/songService');
 const logger = require('../config/logger');
 const { uploadToCloudinary } = require('../config/cloudinary');
-const { uploadToGCS } = require('../config/gcs');
+const { uploadToAzure } = require('../config/azure');
 
 class SongController {
   /**
@@ -57,21 +57,31 @@ class SongController {
       // 1. Upload cover image to Cloudinary if provided
       if (req.files && req.files.coverImage && req.files.coverImage[0]) {
         const coverFile = req.files.coverImage[0];
-        const result = await uploadToCloudinary(coverFile.buffer, 'image', 'covers');
-        coverUrl = result.secure_url;
+        try {
+          const result = await uploadToCloudinary(coverFile.buffer, 'image', 'covers');
+          coverUrl = result.secure_url;
+        } catch (uploadErr) {
+          logger.warn('Cloudinary cover upload failed — song will be saved without a cover image. Check CLOUDINARY_API_SECRET.', {
+            error: uploadErr.message,
+          });
+        }
       }
 
-      // 2. Upload MP3 to Google Cloud Storage if provided
+      // 2. Upload MP3 to Azure Blob Storage if provided
       if (req.files && req.files.audioFile && req.files.audioFile[0]) {
         const audioFile = req.files.audioFile[0];
-        
-        // Ensure GCS bucket env var is set, or it will use default
-        songUrl = await uploadToGCS(
-          audioFile.buffer,
-          audioFile.originalname,
-          'songs',
-          audioFile.mimetype
-        );
+        try {
+          songUrl = await uploadToAzure(
+            audioFile.buffer,
+            audioFile.originalname,
+            'songs',
+            audioFile.mimetype
+          );
+        } catch (uploadErr) {
+          logger.warn('Azure audio upload failed — song will be saved without a songUrl. Configure AZURE_STORAGE_CONNECTION_STRING to enable uploads.', {
+            error: uploadErr.message,
+          });
+        }
       }
 
       // Build song payload
@@ -81,13 +91,19 @@ class SongController {
         songUrl: songUrl,
       };
 
-      // Since the frontend sends 'genre' as a string in formData when multiple, parse array if it's a string
+      // genre is sent as a plain string from the select dropdown.
+      // Handle edge case where someone JSON-stringified it (e.g. '["Pop"]' → 'Pop').
       if (typeof songData.genre === 'string') {
         try {
-          songData.genre = JSON.parse(songData.genre);
+          const parsed = JSON.parse(songData.genre);
+          // If it parsed into an array, take the first element
+          songData.genre = Array.isArray(parsed) ? parsed[0] : parsed;
         } catch (e) {
-          songData.genre = [songData.genre];
+          // It's already a plain string like 'Pop' — keep it as-is
         }
+      } else if (Array.isArray(songData.genre)) {
+        // Shouldn't happen from this form, but be safe
+        songData.genre = songData.genre[0];
       }
 
       const song = await songService.createSong(songData);

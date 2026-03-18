@@ -10,8 +10,11 @@ const BASE_URLS = {
 const createApiClient = (baseURL) => {
   const client = axios.create({
     baseURL,
-    timeout: 10000,
-    headers: { 'Content-Type': 'application/json' },
+    timeout: 30000, // increased to 30s for file uploads
+    // NOTE: Do NOT set Content-Type here — axios auto-sets it correctly:
+    //   'application/json'           for plain objects
+    //   'multipart/form-data; boundary=...'  for FormData (file uploads)
+    // Hardcoding it breaks multipart uploads because multer needs the boundary.
   });
 
   // Request interceptor: attach Clerk token
