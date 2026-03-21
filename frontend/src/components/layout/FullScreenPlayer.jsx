@@ -1,6 +1,6 @@
 import { usePlayer } from '../../context/PlayerContext';
 import {
-  Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart
+  Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Repeat, Repeat1
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,11 +11,24 @@ const formatTime = (sec) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
+const getRepeatIcon = (mode) => {
+  if (mode === 'REPEAT_ONCE') return <Repeat1 className="w-5 h-5" />;
+  if (mode === 'REPEAT_INFINITE') return <Repeat className="w-5 h-5" />;
+  return <Repeat className="w-5 h-5 opacity-50" />;
+};
+
+const getRepeatTooltip = (mode) => {
+  if (mode === 'REPEAT_ONCE') return 'Repeat once (click to stop repeating)';
+  if (mode === 'REPEAT_INFINITE') return 'Repeat all (click for repeat once)';
+  return 'Repeat off (click to repeat all)';
+};
+
 export default function FullScreenPlayer() {
   const {
     currentSong, isPlaying, progress, duration, volume, isMuted,
     isLoading, showFullScreenPlayer, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute,
+    playNext, playPrevious, repeatMode, toggleRepeatMode,
   } = usePlayer();
 
   const [isFavorite, setIsFavorite] = useState(false);
@@ -93,7 +106,7 @@ export default function FullScreenPlayer() {
 
       {/* Controls */}
       <div className="px-4 md:px-8 py-8 border-t border-white/10">
-        {/* Play/Pause + Favorite */}
+        {/* Play/Pause + Controls */}
         <div className="flex items-center justify-center gap-8 mb-8">
           {/* Favorite Button */}
           <button
@@ -103,6 +116,16 @@ export default function FullScreenPlayer() {
             }`}
           >
             <Heart className="w-6 h-6" fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
+
+          {/* Previous */}
+          <button
+            onClick={playPrevious}
+            disabled={isLoading}
+            className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-surface-2/20 disabled:opacity-50 transition-colors"
+            title="Previous"
+          >
+            <SkipBack className="w-6 h-6" />
           </button>
 
           {/* Play/Pause */}
@@ -120,8 +143,15 @@ export default function FullScreenPlayer() {
             )}
           </button>
 
-          {/* Placeholder for future controls */}
-          <div className="w-6" />
+          {/* Next */}
+          <button
+            onClick={playNext}
+            disabled={isLoading}
+            className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-surface-2/20 disabled:opacity-50 transition-colors"
+            title="Next"
+          >
+            <SkipForward className="w-6 h-6" />
+          </button>
         </div>
 
         {/* Volume Control */}
@@ -142,6 +172,24 @@ export default function FullScreenPlayer() {
             onChange={(e) => changeVolume(parseFloat(e.target.value))}
             className="flex-1 h-1.5 accent-brand-500 cursor-pointer rounded-full"
           />
+        </div>
+
+        {/* Repeat Mode Control */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={toggleRepeatMode}
+            disabled={isLoading}
+            className={`transition-colors ${
+              repeatMode === 'REPEAT_INFINITE'
+                ? 'text-brand-400 hover:text-brand-300'
+                : repeatMode === 'REPEAT_ONCE'
+                ? 'text-accent-400 hover:text-accent-300'
+                : 'text-slate-400 hover:text-white'
+            } disabled:opacity-50`}
+            title={getRepeatTooltip(repeatMode)}
+          >
+            {getRepeatIcon(repeatMode)}
+          </button>
         </div>
       </div>
     </div>

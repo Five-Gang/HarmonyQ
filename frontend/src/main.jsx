@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import App from './App.jsx';
 import { PlayerProvider } from './context/PlayerContext.jsx';
+import { ListeningHistoryTracker } from './components/ListeningHistoryTracker.jsx';
 import './index.css';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -51,7 +52,9 @@ if (!PUBLISHABLE_KEY) {
       >
         <QueryClientProvider client={queryClient}>
           <PlayerProvider>
-            <App />
+            <ListeningHistoryTracker>
+              <App />
+            </ListeningHistoryTracker>
           </PlayerProvider>
           <Toaster
             position="bottom-right"

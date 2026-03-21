@@ -1,7 +1,7 @@
 import { usePlayer } from '../../context/PlayerContext';
 import { useSidebar } from '../../context/SidebarContext';
 import {
-  Play, Pause, Volume2, VolumeX, Music, Loader2, X
+  Play, Pause, Volume2, VolumeX, Music, Loader2, X, SkipBack, SkipForward, Repeat, Repeat1
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -12,11 +12,24 @@ const formatTime = (sec) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
+const getRepeatIcon = (mode) => {
+  if (mode === 'REPEAT_ONCE') return <Repeat1 className="w-4 h-4" />;
+  if (mode === 'REPEAT_INFINITE') return <Repeat className="w-4 h-4" />;
+  return <Repeat className="w-4 h-4 opacity-50" />;
+};
+
+const getRepeatTooltip = (mode) => {
+  if (mode === 'REPEAT_ONCE') return 'Repeat once (click to stop repeating)';
+  if (mode === 'REPEAT_INFINITE') return 'Repeat all (click for repeat once)';
+  return 'Repeat off (click to repeat all)';
+};
+
 export default function MiniPlayer() {
   const {
     currentSong, isPlaying, progress, duration, volume, isMuted,
     isLoading, error, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute, clearError,
+    playNext, playPrevious, repeatMode, toggleRepeatMode,
   } = usePlayer();
 
   const { collapsed } = useSidebar();
@@ -99,6 +112,16 @@ export default function MiniPlayer() {
             {formatTime(currentTime)}
           </span>
 
+          {/* Previous */}
+          <button
+            onClick={playPrevious}
+            disabled={isLoading}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-2 disabled:opacity-50 transition-colors"
+            title="Previous"
+          >
+            <SkipBack className="w-4 h-4" />
+          </button>
+
           {/* Play / Pause */}
           <button
             onClick={togglePlay}
@@ -112,6 +135,30 @@ export default function MiniPlayer() {
             ) : (
               <Play className="w-5 h-5 text-white fill-white ml-0.5" />
             )}
+          </button>
+
+          {/* Next */}
+          <button
+            onClick={playNext}
+            disabled={isLoading}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-2 disabled:opacity-50 transition-colors"
+            title="Next"
+          >
+            <SkipForward className="w-4 h-4" />
+          </button>
+
+          {/* Repeat */}
+          <button
+            onClick={toggleRepeatMode}
+            disabled={isLoading}
+            className={clsx(
+              'p-2 rounded-lg transition-colors',
+              repeatMode === 'REPEAT_INFINITE' ? 'text-brand-400 hover:bg-surface-2' : repeatMode === 'REPEAT_ONCE' ? 'text-accent-400 hover:bg-surface-2' : 'text-slate-400 hover:text-white hover:bg-surface-2',
+              'disabled:opacity-50'
+            )}
+            title={getRepeatTooltip(repeatMode)}
+          >
+            {getRepeatIcon(repeatMode)}
           </button>
 
           {/* Duration */}

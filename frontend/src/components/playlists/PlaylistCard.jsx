@@ -24,14 +24,22 @@ export const PlaylistCard = ({ playlist, onEdit }) => {
       className="card-hover group relative overflow-hidden"
     >
       {/* Cover */}
-      <div className="h-40 bg-gradient-to-br from-brand-900 to-accent-600/30 flex items-center justify-center rounded-t-2xl relative">
-        <div className="grid grid-cols-2 gap-1 p-4 w-full h-full">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="bg-white/5 rounded-lg flex items-center justify-center">
-              <Music className="w-6 h-6 text-slate-600" />
-            </div>
-          ))}
-        </div>
+      <div className="h-40 bg-gradient-to-br from-brand-900 to-accent-600/30 flex items-center justify-center rounded-t-2xl relative overflow-hidden">
+        {playlist.coverImage ? (
+          <img
+            src={playlist.coverImage}
+            alt={playlist.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-1 p-4 w-full h-full">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="bg-white/5 rounded-lg flex items-center justify-center">
+                <Music className="w-6 h-6 text-slate-600" />
+              </div>
+            ))}
+          </div>
+        )}
         <div className="absolute inset-0 rounded-t-2xl bg-gradient-to-t from-black/50 to-transparent" />
 
         {/* Privacy badge */}
