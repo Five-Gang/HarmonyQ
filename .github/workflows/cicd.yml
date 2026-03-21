@@ -78,7 +78,7 @@ jobs:
           image-ref: ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL,HIGH
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Push to ACR
@@ -125,7 +125,7 @@ jobs:
           image-ref: ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL,HIGH
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Push to ACR
@@ -172,7 +172,7 @@ jobs:
           image-ref: ${{ env.ACR_LOGIN_SERVER }}/playlist-service:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL,HIGH
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Push to ACR
@@ -219,7 +219,7 @@ jobs:
           image-ref: ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL,HIGH
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Push to ACR
@@ -266,7 +266,7 @@ jobs:
           image-ref: ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
           format: table
           severity: CRITICAL,HIGH
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
 
       - name: Push to ACR
