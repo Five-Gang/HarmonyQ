@@ -1,22 +1,43 @@
 const axios = require('axios');
+const http = require('http');
+const https = require('https');
 const logger = require('../config/logger');
 
 const SONG_CATALOG_URL = process.env.SONG_CATALOG_URL || 'http://localhost:3001';
 const USER_PROFILE_URL = process.env.USER_PROFILE_URL || 'http://localhost:3002';
 const PLAYLIST_URL = process.env.PLAYLIST_URL || 'http://localhost:3003';
 
+// Create axios instance with connection pooling and keep-alive
+const axiosInstance = axios.create({
+  httpAgent: new http.Agent({ keepAlive: true, timeout: 20000 }),
+  httpsAgent: new https.Agent({ keepAlive: true, timeout: 20000 }),
+  timeout: 15000,
+});
+
 const makeRequest = async (url, method = 'get', data = null, token) => {
   try {
-    const response = await axios({
+    const response = await axiosInstance({
       method,
       url,
       data,
       headers: { Authorization: `Bearer ${token}` },
-      timeout: 5000,
     });
     return response.data;
   } catch (error) {
-    logger.warn(`Service call failed: ${url}`, { error: error.message });
+    const errorDetails = {
+      error: error.message,
+      code: error.code,
+      status: error.response?.status,
+      timeoutMillis: 15000,
+    };
+    
+    if (error.code === 'ECONNREFUSED') {
+      errorDetails.detail = 'Service unavailable - connection refused';
+    } else if (error.code === 'ECONNABORTED') {
+      errorDetails.detail = 'Service timeout';
+    }
+    
+    logger.warn(`Service call failed: ${url}`, errorDetails);
     return null;
   }
 };
