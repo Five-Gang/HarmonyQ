@@ -46,7 +46,7 @@ export function AdminLayout() {
         {!collapsed && (
           <div>
             <h1 className="text-lg font-bold text-white leading-tight">Admin</h1>
-            <p className="text-xs text-slate-500">MelodAI Panel</p>
+            <p className="text-xs text-slate-500">Harmoniq Admin</p>
           </div>
         )}
       </div>

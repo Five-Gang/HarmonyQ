@@ -31,7 +31,7 @@ export default function SignInPage() {
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Music2 className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">MelodAI</span>
+            <span className="text-xl font-bold text-white tracking-tight">Harmoniq</span>
           </Link>
 
           {/* Center content */}
@@ -80,7 +80,7 @@ export default function SignInPage() {
           {/* Bottom testimonial */}
           <div className="glass rounded-2xl p-5 max-w-md">
             <p className="text-sm text-slate-300 italic leading-relaxed mb-3">
-              "MelodAI completely changed how I discover music. The AI recommendations are spot on!"
+              "Harmoniq completely changed how I discover music. The AI recommendations are spot on!"
             </p>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-sm font-bold text-white">
@@ -116,7 +116,7 @@ export default function SignInPage() {
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow">
                 <Music2 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">MelodAI</span>
+              <span className="text-2xl font-bold text-white">Harmoniq</span>
             </Link>
           </div>
 
@@ -190,7 +190,7 @@ export default function SignInPage() {
           {/* Bottom decoration */}
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-600">
-              By continuing, you agree to MelodAI's Terms of Service and Privacy Policy.
+              By continuing, you agree to Harmoniq's Terms of Service and Privacy Policy.
             </p>
           </div>
         </div>

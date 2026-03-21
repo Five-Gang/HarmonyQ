@@ -109,7 +109,7 @@ function SetupGuide() {
             🎵
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'white', margin: '0 0 0.5rem' }}>
-            MelodAI Setup Required
+            Harmoniq Setup Required
           </h1>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
             Add your Clerk Publishable Key to get started
