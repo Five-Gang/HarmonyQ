@@ -1,33 +1,29 @@
-# ─────────────────────────────────────────
-# Stage 1: Production image
-# ─────────────────────────────────────────
 FROM node:20-alpine AS production
 
-# Set working directory
-WORKDIR /app
+# Mirror monorepo structure so file:../.. in package-lock.json resolves correctly
+WORKDIR /monorepo
 
-# Add a non-root user for security
+# Copy root package.json (this IS the melodai-microservices local dep target)
+COPY package.json ./
+
+# Switch into service directory at the same relative path as local dev
+WORKDIR /monorepo/services/song-catalog
+
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy package files first (layer caching)
-COPY package.json package-lock.json ./
+# Copy service package files
+COPY services/song-catalog/package.json services/song-catalog/package-lock.json ./
 
-# Install production dependencies only
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy application source
-COPY src/ ./src/
+COPY services/song-catalog/src/ ./src/
 
-# Set ownership to non-root user
-RUN chown -R appuser:appgroup /app
+RUN chown -R appuser:appgroup /monorepo
 USER appuser
 
-# Expose service port
 EXPOSE 3001
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
 
-# Start the service
 CMD ["node", "src/app.js"]

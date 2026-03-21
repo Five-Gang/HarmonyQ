@@ -1,19 +1,20 @@
-# ─────────────────────────────────────────
-# Stage 1: Production image
-# ─────────────────────────────────────────
 FROM node:20-alpine AS production
 
-WORKDIR /app
+WORKDIR /monorepo
+
+COPY package.json ./
+
+WORKDIR /monorepo/services/user-profile
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-COPY package.json package-lock.json ./
+COPY services/user-profile/package.json services/user-profile/package-lock.json ./
 
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY src/ ./src/
+COPY services/user-profile/src/ ./src/
 
-RUN chown -R appuser:appgroup /app
+RUN chown -R appuser:appgroup /monorepo
 USER appuser
 
 EXPOSE 3002

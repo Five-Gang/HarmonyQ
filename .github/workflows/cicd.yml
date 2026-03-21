@@ -64,7 +64,7 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/song-catalog
+          context: .
           file: ./services/song-catalog/Dockerfile
           push: false
           load: true
@@ -111,7 +111,7 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/user-profile
+          context: .
           file: ./services/user-profile/Dockerfile
           push: false
           load: true
@@ -158,7 +158,7 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/playlist
+          context: .
           file: ./services/playlist/Dockerfile
           push: false
           load: true
@@ -205,7 +205,7 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/recommendation
+          context: .
           file: ./services/recommendation/Dockerfile
           push: false
           load: true
@@ -252,7 +252,7 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: .
           file: ./frontend/Dockerfile
           push: false
           load: true
