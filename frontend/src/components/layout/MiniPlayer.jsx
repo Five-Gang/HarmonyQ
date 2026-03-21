@@ -1,7 +1,9 @@
 import { usePlayer } from '../../context/PlayerContext';
+import { useSidebar } from '../../context/SidebarContext';
 import {
   Play, Pause, Volume2, VolumeX, Music, Loader2, X
 } from 'lucide-react';
+import { clsx } from 'clsx';
 
 const formatTime = (sec) => {
   if (!sec || isNaN(sec)) return '0:00';
@@ -13,13 +15,15 @@ const formatTime = (sec) => {
 export default function MiniPlayer() {
   const {
     currentSong, isPlaying, progress, duration, volume, isMuted,
-    isLoading, error,
+    isLoading, error, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute, clearError,
   } = usePlayer();
 
+  const { collapsed } = useSidebar();
+
   if (error && !currentSong) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-red-900/90 backdrop-blur border-t border-red-500/30 px-4 py-3 flex items-center justify-between">
+      <div className={clsx('fixed bottom-0 right-0 z-50 bg-red-900/90 backdrop-blur border-t border-red-500/30 px-4 py-3 flex items-center justify-between transition-all duration-300', collapsed ? 'lg:left-16' : 'lg:left-64', 'left-0')}>
         <p className="text-red-300 text-sm">{error}</p>
         <button onClick={clearError} className="text-red-400 hover:text-red-200">
           <X className="w-4 h-4" />
@@ -33,7 +37,7 @@ export default function MiniPlayer() {
   const currentTime = duration ? (progress / 100) * duration : 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface-1/95 backdrop-blur-xl border-t border-white/8 shadow-2xl">
+    <div className={clsx('fixed bottom-0 right-0 z-50 bg-surface-1/95 backdrop-blur-xl border-t border-white/8 shadow-2xl transition-all duration-300', collapsed ? 'lg:left-16' : 'lg:left-64', 'left-0')}>
       {/* Error banner above player */}
       {error && (
         <div className="bg-red-900/80 border-b border-red-500/30 px-4 py-2 flex items-center justify-between">
@@ -62,8 +66,11 @@ export default function MiniPlayer() {
       </div>
 
       <div className="flex items-center gap-4 px-4 py-3 lg:px-6">
-        {/* Song info */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Song info - clickable to open full screen */}
+        <button
+          onClick={toggleFullScreenPlayer}
+          className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity text-left"
+        >
           {/* Cover art */}
           <div className="w-10 h-10 rounded-lg bg-surface-3 flex-shrink-0 overflow-hidden">
             {currentSong.coverUrl || currentSong.coverArt ? (
@@ -83,7 +90,7 @@ export default function MiniPlayer() {
             <p className="text-sm font-semibold text-white truncate">{currentSong.title}</p>
             <p className="text-xs text-slate-400 truncate">{currentSong.artist}</p>
           </div>
-        </div>
+        </button>
 
         {/* Controls — center */}
         <div className="flex items-center gap-3 flex-shrink-0">
