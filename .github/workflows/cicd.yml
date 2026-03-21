@@ -1,0 +1,278 @@
+name: HarmonyQ CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  song-catalog:
+    name: song-catalog - Build / Scan / Push
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/song-catalog
+          file: ./services/song-catalog/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Push to ACR
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          docker tag ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:${{ env.IMAGE_TAG }} \
+                     ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:latest
+          docker push ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/song-catalog-service:latest
+
+  user-profile:
+    name: user-profile - Build / Scan / Push
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/user-profile
+          file: ./services/user-profile/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Push to ACR
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          docker tag ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:${{ env.IMAGE_TAG }} \
+                     ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:latest
+          docker push ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/user-profile-service:latest
+
+  playlist:
+    name: playlist - Build / Scan / Push
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/playlist
+          file: ./services/playlist/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/playlist-service:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/playlist-service:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Push to ACR
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          docker tag ${{ env.ACR_LOGIN_SERVER }}/playlist-service:${{ env.IMAGE_TAG }} \
+                     ${{ env.ACR_LOGIN_SERVER }}/playlist-service:latest
+          docker push ${{ env.ACR_LOGIN_SERVER }}/playlist-service:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/playlist-service:latest
+
+  recommendation:
+    name: recommendation - Build / Scan / Push
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/recommendation
+          file: ./services/recommendation/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Push to ACR
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          docker tag ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:${{ env.IMAGE_TAG }} \
+                     ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:latest
+          docker push ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/recommendation-service:latest
+
+  frontend:
+    name: frontend - Build / Scan / Push
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Push to ACR
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          docker tag ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }} \
+                     ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
