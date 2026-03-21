@@ -1,5 +1,8 @@
 FROM node:22-alpine AS production
 
+# Apply latest security patches to the OS
+RUN apk upgrade --no-cache
+
 # Mirror monorepo structure so file:../.. in package-lock.json resolves correctly
 WORKDIR /monorepo
 

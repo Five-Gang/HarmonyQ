@@ -1,6 +1,8 @@
 # Stage 1: Build the Vite/React app
 FROM node:22-alpine AS builder
 
+RUN apk upgrade --no-cache
+
 WORKDIR /monorepo
 
 # Copy root package.json (satisfies "melodai-microservices": "file:.." dep)
@@ -18,6 +20,8 @@ RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:1.27-alpine AS production
+
+RUN apk upgrade --no-cache
 
 RUN rm -rf /usr/share/nginx/html/*
 

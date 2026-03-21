@@ -1,5 +1,7 @@
 FROM node:22-alpine AS production
 
+RUN apk upgrade --no-cache
+
 WORKDIR /monorepo
 
 COPY package.json ./
