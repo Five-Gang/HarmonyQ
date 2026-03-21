@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { User, Settings, Clock, Heart, Palette, Bell, Save, CheckCircle } from 'lucide-react';
+import { User, Settings, Clock, Heart, Palette, Bell, Save, CheckCircle, Music } from 'lucide-react';
 import { useUserProfile, useUpdateProfile, useUpdatePreferences, useListeningHistory } from '../hooks/useUser';
 import { Badge } from '../components/ui/index.jsx';
 import { LoadingSpinner, ErrorState, SkeletonList } from '../components/ui/LoadingStates.jsx';
@@ -22,6 +22,8 @@ export default function ProfilePage() {
   const { user: clerkUser } = useUser();
   const clerkUserId = clerkUser?.id;
   const [activeTab, setActiveTab] = useState('profile');
+  const [historyWithSongs, setHistoryWithSongs] = useState([]);
+  const [loadingHistorySongs, setLoadingHistorySongs] = useState(false);
 
   const { data: profileData, isLoading, error } = useUserProfile(clerkUserId);
   const updateProfile = useUpdateProfile();
@@ -33,6 +35,43 @@ export default function ProfilePage() {
   const [profileForm, setProfileForm] = useState(null);
   const [selectedGenres, setSelectedGenres] = useState(null);
   const [saved, setSaved] = useState(false);
+
+  // Fetch song details for history
+  useEffect(() => {
+    const fetchSongDetails = async () => {
+      if (!historyData?.history || historyData.history.length === 0) {
+        setHistoryWithSongs([]);
+        return;
+      }
+
+      setLoadingHistorySongs(true);
+      try {
+        const enrichedHistory = await Promise.all(
+          historyData.history.map(async (entry) => {
+            try {
+              const response = await fetch(`/api/songs/${entry.songId}`);
+              const result = await response.json();
+              const song = result.song || result.data;
+              return { ...entry, song };
+            } catch (err) {
+              console.error(`Failed to fetch song ${entry.songId}:`, err);
+              return { ...entry, song: null };
+            }
+          })
+        );
+        setHistoryWithSongs(enrichedHistory);
+      } catch (err) {
+        console.error('Error enriching history:', err);
+        setHistoryWithSongs(historyData.history);
+      } finally {
+        setLoadingHistorySongs(false);
+      }
+    };
+
+    if (activeTab === 'history') {
+      fetchSongDetails();
+    }
+  }, [historyData, activeTab]);
 
   // Init forms from profile data
   if (profile && !profileForm) {
@@ -66,8 +105,6 @@ export default function ProfilePage() {
 
   if (error) return <ErrorState message={error.message} />;
   if (isLoading) return <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>;
-
-  const history = historyData?.history || [];
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
@@ -185,30 +222,49 @@ export default function ProfilePage() {
             <div>
               <p className="text-2xl font-bold text-white">
                 {historyData?.totalListeningTime
-                  ? `${Math.round(historyData.totalListeningTime / 3600)}h`
-                  : '0h'}
+                  ? `${Math.floor(historyData.totalListeningTime / 3600)}h ${Math.floor((historyData.totalListeningTime % 3600) / 60)}m`
+                  : '0h 0m'}
               </p>
               <p className="text-slate-400 text-sm">Total listening time</p>
             </div>
           </div>
 
-          {historyLoading ? <SkeletonList count={5} /> : history.length === 0 ? (
+          {historyLoading || loadingHistorySongs ? <SkeletonList count={5} /> : historyWithSongs.length === 0 ? (
             <div className="card p-8 text-center">
               <Clock className="w-8 h-8 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-400 text-sm">No listening history yet. Start playing some songs!</p>
             </div>
           ) : (
             <div className="card overflow-hidden">
-              {history.slice(0, 20).map((entry, i) => (
+              {historyWithSongs.slice(0, 20).map((entry, i) => (
                 <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-surface-2 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-surface-3 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-4 h-4 text-slate-500" />
+                  {/* Song Cover */}
+                  <div className="w-10 h-10 rounded-lg bg-surface-3 flex-shrink-0 overflow-hidden">
+                    {entry.song?.coverUrl || entry.song?.coverArt ? (
+                      <img
+                        src={entry.song.coverUrl || entry.song.coverArt}
+                        alt={entry.song.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <Music className="w-5 h-5 text-slate-600" />
+                      </div>
+                    )}
                   </div>
+                  {/* Song Details */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-300 font-mono truncate">{entry.songId}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(entry.playedAt).toLocaleDateString()} · {Math.round(entry.duration / 60)} min
+                    <p className="text-sm text-white font-medium truncate">
+                      {entry.song?.title || 'Unknown Song'}
                     </p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {entry.song?.artist || 'Unknown Artist'}
+                    </p>
+                  </div>
+                  {/* Date & Duration */}
+                  <div className="text-right text-xs text-slate-500 flex-shrink-0">
+                    <p>{new Date(entry.playedAt).toLocaleDateString()}</p>
+                    <p>{Math.round(entry.duration / 60)} min</p>
                   </div>
                 </div>
               ))}
