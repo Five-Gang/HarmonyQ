@@ -152,7 +152,7 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Music2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">MelodAI</span>
+            <span className="text-xl font-bold text-white tracking-tight">Harmoniq</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
@@ -301,13 +301,13 @@ export default function LandingPage() {
       <section id="features" className="relative py-24">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-brand-400 font-semibold text-sm tracking-wider uppercase mb-3">Why MelodAI?</p>
+            <p className="text-brand-400 font-semibold text-sm tracking-wider uppercase mb-3">Why Harmoniq?</p>
             <h2 className="text-4xl lg:text-5xl font-extrabold text-white mb-4">
               Everything you need to
               <span className="bg-gradient-to-r from-brand-400 to-accent-400 bg-clip-text text-transparent"> feel the music</span>
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto">
-              Powered by smart recommendations and a beautiful interface, MelodAI transforms how you discover, organize, and enjoy your music.
+              Powered by smart recommendations and a beautiful interface, Harmoniq transforms how you discover, organize, and enjoy your music.
             </p>
           </div>
 
@@ -402,7 +402,7 @@ export default function LandingPage() {
                 Ready to feel the beat?
               </h2>
               <p className="text-slate-400 max-w-xl mx-auto mb-8 text-lg">
-                Join MelodAI today and unlock a world of personalized music discovery. It's free, it's fast, and it's waiting for you.
+                Join Harmoniq today and unlock a world of personalized music discovery. It's free, it's fast, and it's waiting for you.
               </p>
               <Link
                 to={isSignedIn ? '/dashboard' : '/sign-up'}
@@ -423,7 +423,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
               <Music2 className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-white">MelodAI</span>
+            <span className="font-bold text-white">Harmoniq</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-slate-500">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -431,7 +431,7 @@ export default function LandingPage() {
             <Link to="/sign-in" className="hover:text-white transition-colors">Sign In</Link>
           </div>
           <p className="text-xs text-slate-600">
-            © 2026 MelodAI. All rights reserved.
+            © 2026 Harmoniq. All rights reserved.
           </p>
         </div>
       </footer>

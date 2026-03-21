@@ -6,6 +6,7 @@ import {
 import { useSongs, useCreateSong, useDeleteSong } from '../../hooks/useSongs';
 import { SearchBar, Modal, FormField, Pagination, Badge } from '../../components/ui/index.jsx';
 import { SkeletonList, EmptyState, ErrorState } from '../../components/ui/LoadingStates.jsx';
+import { extractAudioMetadata } from '../../utils/audioMetadata.js';
 import toast from 'react-hot-toast';
 
 const GENRES = [
@@ -38,6 +39,7 @@ export default function AdminSongsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [newSong, setNewSong] = useState({ ...emptySong });
   const [openMenu, setOpenMenu] = useState(null);
+  const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
 
   const { data, isLoading, error, refetch } = useSongs({
     page,
@@ -55,6 +57,37 @@ export default function AdminSongsPage() {
   const pagination = data?.pagination;
 
   const handleSearch = useCallback((val) => { setSearch(val); setPage(1); }, []);
+
+  const handleAudioFileChange = async (e) => {
+    const audioFile = e.target.files[0];
+    if (!audioFile) return;
+
+    setNewSong((s) => ({ ...s, audioFile }));
+    
+    // Extract metadata from the audio file
+    setIsExtractingMetadata(true);
+    try {
+      const metadata = await extractAudioMetadata(audioFile);
+      setNewSong((s) => ({
+        ...s,
+        // Only update if field is empty
+        title: s.title || metadata.title,
+        artist: s.artist || metadata.artist,
+        album: s.album || metadata.album,
+        duration: s.duration || (metadata.duration ? metadata.duration.toString() : ''),
+        releaseYear: s.releaseYear || (metadata.releaseYear ? metadata.releaseYear.toString() : ''),
+      }));
+      
+      if (metadata.title || metadata.artist) {
+        toast.success('Metadata extracted from audio file');
+      }
+    } catch (err) {
+      console.error('Error extracting metadata:', err);
+      toast.error('Failed to extract metadata');
+    } finally {
+      setIsExtractingMetadata(false);
+    }
+  };
 
   const handleCreateSong = async (e) => {
     e.preventDefault();
@@ -249,6 +282,11 @@ export default function AdminSongsPage() {
       {/* Add Song Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Song" size="lg">
         <form onSubmit={handleCreateSong} className="space-y-5">
+          {/* Info message about automatic metadata extraction */}
+          <div className="bg-brand-500/10 border border-brand-500/30 rounded-lg p-3 text-sm text-brand-300">
+            💡 Metadata (title, artist, album, duration, year) is automatically extracted from the audio file. Edit any field as needed.
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Title *" id="admin-title">
               <input
@@ -316,14 +354,22 @@ export default function AdminSongsPage() {
             </FormField>
             <FormField label="Audio File (.mp3/.wav) *" id="admin-audio">
               <div className="flex flex-col gap-2">
-                <input
-                  id="admin-audio"
-                  type="file"
-                  accept="audio/*"
-                  className="input !p-2 cursor-pointer text-sm"
-                  required
-                  onChange={(e) => setNewSong((s) => ({ ...s, audioFile: e.target.files[0] }))}
-                />
+                <div className="relative">
+                  <input
+                    id="admin-audio"
+                    type="file"
+                    accept="audio/*"
+                    className="input !p-2 cursor-pointer text-sm"
+                    required
+                    onChange={handleAudioFileChange}
+                    disabled={isExtractingMetadata}
+                  />
+                  {isExtractingMetadata && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-brand-400 animate-pulse">
+                      Extracting metadata...
+                    </span>
+                  )}
+                </div>
                 {newSong.audioFile && <span className="text-xs text-brand-400">Selected: {newSong.audioFile.name}</span>}
               </div>
             </FormField>

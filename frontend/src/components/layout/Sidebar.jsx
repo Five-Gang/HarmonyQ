@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useClerk, useUser } from '@clerk/clerk-react';
+import { useSidebar } from '../../context/SidebarContext';
 import {
   Music2, Home, Search, ListMusic, Star, User, LogOut,
   ChevronLeft, ChevronRight, Settings, Menu, X, Shield
@@ -16,7 +17,7 @@ const navItems = [
 ];
 
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed } = useSidebar();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { signOut } = useClerk();
   const { user } = useUser();
@@ -36,7 +37,7 @@ export const Sidebar = () => {
         </div>
         {!collapsed && (
           <div>
-            <h1 className="text-lg font-bold text-white leading-tight">MelodAI</h1>
+            <h1 className="text-lg font-bold text-white leading-tight">Harmoniq</h1>
             <p className="text-xs text-slate-500">Music Manager</p>
           </div>
         )}
@@ -148,7 +149,7 @@ export const Sidebar = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
             <Music2 className="w-4 h-4 text-white" />
           </div>
-          <span className="text-base font-bold text-white">MelodAI</span>
+          <span className="text-base font-bold text-white">Harmoniq</span>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}

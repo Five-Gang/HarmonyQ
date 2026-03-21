@@ -31,7 +31,7 @@ export default function SignUpPage() {
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Music2 className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">MelodAI</span>
+            <span className="text-xl font-bold text-white tracking-tight">Harmoniq</span>
           </Link>
 
           {/* Center content */}
@@ -91,7 +91,7 @@ export default function SignUpPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-white">1,200+ music lovers</p>
-              <p className="text-xs text-slate-500">already on MelodAI</p>
+              <p className="text-xs text-slate-500">already on Harmoniq</p>
             </div>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function SignUpPage() {
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow">
                 <Music2 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">MelodAI</span>
+              <span className="text-2xl font-bold text-white">Harmoniq</span>
             </Link>
           </div>
 
@@ -186,7 +186,7 @@ export default function SignUpPage() {
           {/* Bottom */}
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-600">
-              By creating an account, you agree to MelodAI's Terms of Service and Privacy Policy.
+              By creating an account, you agree to Harmoniq's Terms of Service and Privacy Policy.
             </p>
           </div>
         </div>

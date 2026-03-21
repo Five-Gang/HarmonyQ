@@ -77,3 +77,14 @@ export const useRemoveSongFromPlaylist = () => {
     onError: (err) => toast.error(err.message),
   });
 };
+
+export const useReorderSongs = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ playlistId, songIds }) => playlistService.reorderSongs(playlistId, songIds),
+    onSuccess: (_, { playlistId }) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists', playlistId] });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};

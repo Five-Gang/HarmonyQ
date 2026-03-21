@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import App from './App.jsx';
 import { PlayerProvider } from './context/PlayerContext.jsx';
+import { ListeningHistoryTracker } from './components/ListeningHistoryTracker.jsx';
 import './index.css';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -51,7 +52,9 @@ if (!PUBLISHABLE_KEY) {
       >
         <QueryClientProvider client={queryClient}>
           <PlayerProvider>
-            <App />
+            <ListeningHistoryTracker>
+              <App />
+            </ListeningHistoryTracker>
           </PlayerProvider>
           <Toaster
             position="bottom-right"
@@ -109,7 +112,7 @@ function SetupGuide() {
             🎵
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'white', margin: '0 0 0.5rem' }}>
-            MelodAI Setup Required
+            Harmoniq Setup Required
           </h1>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
             Add your Clerk Publishable Key to get started

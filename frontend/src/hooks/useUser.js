@@ -42,6 +42,17 @@ export const useListeningHistory = (clerkUserId, params) =>
     enabled: !!clerkUserId,
   });
 
+export const useRecordListeningHistory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ clerkUserId, songId, duration }) => userService.addToHistory(clerkUserId, { songId, duration }),
+    onSuccess: (_, { clerkUserId }) => {
+      queryClient.invalidateQueries({ queryKey: ['history', clerkUserId] });
+    },
+    onError: (err) => console.error('Failed to record listening history:', err),
+  });
+};
+
 export const useSyncUser = () =>
   useMutation({ mutationFn: userService.syncUser });
 
