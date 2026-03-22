@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: melodai
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  # Service URLs for internal communication
+  SONG_CATALOG_URL: "http://song-catalog-service.melodai.svc.cluster.local:3001"
+  USER_PROFILE_URL: "http://user-profile-service.melodai.svc.cluster.local:3002"
+  PLAYLIST_URL: "http://playlist-service.melodai.svc.cluster.local:3003"
+  
+  # CORS
+  CORS_ORIGIN: "http://167.99.26.212"

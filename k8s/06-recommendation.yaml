@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-deployment
+  namespace: melodai
+  labels:
+    app: recommendation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recommendation
+  template:
+    metadata:
+      labels:
+        app: recommendation
+    spec:
+      imagePullSecrets:
+      - name: acr-pull-secret
+      containers:
+      - name: recommendation
+        image: harmoniq.azurecr.io/recommendation-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3004
+        envFrom:
+        - configMapRef:
+            name: app-config
+        env:
+        - name: CLERK_JWKS_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLERK_JWKS_URL
+        - name: PORT
+          value: "3004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendation-service
+  namespace: melodai
+spec:
+  selector:
+    app: recommendation
+  ports:
+    - protocol: TCP
+      port: 3004
+      targetPort: 3004
+  type: ClusterIP

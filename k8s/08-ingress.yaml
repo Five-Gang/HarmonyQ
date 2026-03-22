@@ -1,0 +1,65 @@
+# API Ingress — strips /api/xxx prefix when forwarding to backend services
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: melodai-api-ingress
+  namespace: melodai
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api/(songs.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: song-catalog-service
+            port:
+              number: 3001
+      - path: /api/(users.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: user-profile-service
+            port:
+              number: 3002
+      - path: /api/(playlists.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: playlist-service
+            port:
+              number: 3003
+      - path: /api/(recommendations.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: recommendation-service
+            port:
+              number: 3004
+---
+# Frontend Ingress — passes ALL paths through to nginx as-is (no rewrite)
+# nginx inside the container handles React Router via try_files
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: melodai-frontend-ingress
+  namespace: melodai
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80

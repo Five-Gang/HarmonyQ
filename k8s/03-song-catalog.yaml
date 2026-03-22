@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: song-catalog-deployment
+  namespace: melodai
+  labels:
+    app: song-catalog
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: song-catalog
+  template:
+    metadata:
+      labels:
+        app: song-catalog
+    spec:
+      imagePullSecrets:
+      - name: acr-pull-secret
+      containers:
+      - name: song-catalog
+        image: harmoniq.azurecr.io/song-catalog-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3001
+        envFrom:
+        - configMapRef:
+            name: app-config
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: MONGODB_URI_SONG_CATALOG
+        - name: CLERK_PUBLISHABLE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLERK_PUBLISHABLE_KEY
+        - name: CLERK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLERK_SECRET_KEY
+        - name: CLERK_JWKS_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLERK_JWKS_URL
+        - name: CLOUDINARY_CLOUD_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLOUDINARY_CLOUD_NAME
+        - name: CLOUDINARY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLOUDINARY_API_KEY
+        - name: CLOUDINARY_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CLOUDINARY_API_SECRET
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AZURE_STORAGE_CONNECTION_STRING
+        - name: AZURE_STORAGE_CONTAINER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AZURE_STORAGE_CONTAINER_NAME
+        - name: PORT
+          value: "3001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: song-catalog-service
+  namespace: melodai
+spec:
+  selector:
+    app: song-catalog
+  ports:
+    - protocol: TCP
+      port: 3001
+      targetPort: 3001
+  type: ClusterIP

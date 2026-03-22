@@ -14,6 +14,7 @@ const userProfileRoutes = require('./routes/userProfileRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3002;
 
 const swaggerOptions = {

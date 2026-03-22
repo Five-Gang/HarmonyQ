@@ -36,9 +36,8 @@ function AuthSync({ children }) {
     if (!isLoaded || !isSignedIn) return;
 
     const setupAuth = async () => {
-      // Use the 'melodai' JWT template (created in Clerk Dashboard) which
-      // injects publicMetadata (incl. roles) into the signed token.
-      const token = await getToken({ template: 'melodai' });
+      // Request a standard Clerk JWT token
+      const token = await getToken();
       setAuthToken(token);
 
       // Sync user profile with our backend
@@ -54,7 +53,7 @@ function AuthSync({ children }) {
 
     // Refresh token every 55 seconds (Clerk tokens expire in 60s)
     const interval = setInterval(async () => {
-      const token = await getToken({ template: 'melodai', skipCache: true });
+      const token = await getToken({ skipCache: true });
       setAuthToken(token);
     }, 55000);
 
