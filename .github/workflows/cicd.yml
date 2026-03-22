@@ -282,3 +282,23 @@ jobs:
                      ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
           docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ env.IMAGE_TAG }}
           docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+
+  deploy:
+    name: Deploy to DigitalOcean Kubernetes
+    runs-on: ubuntu-latest
+    needs: [song-catalog, user-profile, playlist, recommendation, frontend]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save 6e3d2de3-8249-4d19-8d21-ffee5f0aa6de
+
+      - name: Deploy (Rollout Restart)
+        run: |
+          kubectl rollout restart deployment -n melodai --all
+          kubectl rollout status deployment -n melodai frontend-deployment --timeout=120s
