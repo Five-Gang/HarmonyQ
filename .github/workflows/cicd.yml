@@ -302,3 +302,4 @@ jobs:
         run: |
           kubectl rollout restart deployment -n melodai song-catalog-deployment user-profile-deployment playlist-deployment recommendation-deployment frontend-deployment
           kubectl rollout status deployment -n melodai frontend-deployment --timeout=120s
+
