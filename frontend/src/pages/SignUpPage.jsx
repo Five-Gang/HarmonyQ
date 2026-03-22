@@ -28,9 +28,7 @@ export default function SignUpPage() {
         <div className="relative z-10 flex flex-col justify-between w-full p-12">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-              <Music2 className="w-6 h-6 text-white" />
-            </div>
+            <img src="/logo.svg" alt="Harmoniq" className="w-12 h-12 group-hover:scale-105 transition-transform" />
             <span className="text-xl font-bold text-white tracking-tight">Harmoniq</span>
           </Link>
 
@@ -107,10 +105,8 @@ export default function SignUpPage() {
         <div className="relative z-10 w-full max-w-[440px]">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow">
-                <Music2 className="w-6 h-6 text-white" />
-              </div>
+            <Link to="/" className="inline-flex flex-col items-center gap-3">
+              <img src="/logo.svg" alt="Harmoniq" className="w-14 h-14" />
               <span className="text-2xl font-bold text-white">Harmoniq</span>
             </Link>
           </div>
