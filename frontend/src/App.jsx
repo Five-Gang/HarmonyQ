@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { setAuthToken } from './lib/apiClient';
@@ -6,6 +6,10 @@ import { useSyncUser } from './hooks/useUser';
 import { AppLayout } from './components/layout/AppLayout.jsx';
 import { PageLoader } from './components/ui/LoadingStates.jsx';
 import { AdminLayout } from './components/layout/AdminLayout.jsx';
+
+export const AuthTokenContext = createContext(null);
+export const useAuthToken = () => useContext(AuthTokenContext);
+
 
 // Pages
 import LandingPage from './pages/LandingPage.jsx';
@@ -31,14 +35,16 @@ function AuthSync({ children }) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const syncUser = useSyncUser();
+  const [tokenReady, setTokenReady] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
     const setupAuth = async () => {
-      // Request a standard Clerk JWT token
-      const token = await getToken();
+      // Request JWT with our custom template so publicMetadata (roles) is included
+      const token = await getToken({ template: 'melodai' });
       setAuthToken(token);
+      setTokenReady(true);
 
       // Sync user profile with our backend
       syncUser.mutate({
@@ -53,14 +59,20 @@ function AuthSync({ children }) {
 
     // Refresh token every 55 seconds (Clerk tokens expire in 60s)
     const interval = setInterval(async () => {
-      const token = await getToken({ skipCache: true });
+      const token = await getToken({ template: 'melodai', skipCache: true });
       setAuthToken(token);
     }, 55000);
 
     return () => clearInterval(interval);
   }, [isLoaded, isSignedIn, user?.id]);
 
-  return children;
+  if (!tokenReady) return <PageLoader />;
+
+  return (
+    <AuthTokenContext.Provider value={tokenReady}>
+      {children}
+    </AuthTokenContext.Provider>
+  );
 }
 
 /**
