@@ -76,6 +76,8 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
     # Rewrites `/docs/<service>/xxx` to `/api-docs/xxx`
     nginx.ingress.kubernetes.io/rewrite-target: /api-docs/$2
+    # Strip Helmet's security headers that force HTTPS and block Swagger scripts
+    nginx.ingress.kubernetes.io/proxy-hide-headers: "Content-Security-Policy,Cross-Origin-Opener-Policy"
 spec:
   rules:
   - http:
