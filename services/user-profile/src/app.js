@@ -45,7 +45,11 @@ const swaggerOptions = {
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
-app.use(helmet());
+// Security middleware
+// Disable CSP on /api-docs so Swagger UI assets load correctly over plain HTTP
+app.use('/api-docs', helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: false }));
+app.use(/^(?!\/api-docs)/, helmet());
+
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', methods: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 app.use(express.json({ limit: '10mb' }));

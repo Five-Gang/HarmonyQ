@@ -40,13 +40,16 @@ const swaggerOptions = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ['./src/routes/*.js'], // Files containing annotations
+  apis: ['./src/routes/*.js'],
 };
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
 // Security middleware
-app.use(helmet());
+// Disable CSP on /api-docs so Swagger UI assets load correctly over plain HTTP
+app.use('/api-docs', helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: false }));
+app.use(/^(?!\/api-docs)/, helmet());
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
