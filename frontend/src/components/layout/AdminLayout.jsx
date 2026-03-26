@@ -40,9 +40,7 @@ export function AdminLayout() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={clsx('flex items-center gap-3 px-4 py-6', collapsed && 'justify-center')}>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-          <Shield className="w-5 h-5 text-white" />
-        </div>
+        <img src="/logo.svg" alt="Harmoniq" className="w-10 h-10 flex-shrink-0" />
         {!collapsed && (
           <div>
             <h1 className="text-lg font-bold text-white leading-tight">Admin</h1>
