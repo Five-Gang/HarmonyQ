@@ -30,7 +30,7 @@ export default function MiniPlayer() {
     isLoading, error, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute, clearError,
     playNext, playPrevious, repeatMode, toggleRepeatMode,
-    queue, currentIndex,
+    queue, currentIndex, closePlayer,
   } = usePlayer();
 
   const { collapsed } = useSidebar();
@@ -214,13 +214,9 @@ export default function MiniPlayer() {
 
         {/* Close button */}
         <button
-          onClick={() => {
-            if (currentSong) {
-              togglePlay();
-            }
-          }}
+          onClick={closePlayer}
           className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-2 transition-colors flex-shrink-0"
-          title="Pause player"
+          title="Close player"
         >
           <X className="w-4 h-4" />
         </button>

@@ -248,6 +248,14 @@ export const PlayerProvider = ({ children }) => {
     setShowFullScreenPlayer((prev) => !prev);
   }, []);
 
+  const closePlayer = useCallback(() => {
+    // Pause playback and clear the current song to hide the player
+    audio.pause();
+    setIsPlaying(false);
+    setCurrentSong(null);
+    setShowFullScreenPlayer(false);
+  }, []);
+
   const toggleRepeatMode = useCallback(() => {
     setRepeatMode((current) => {
       if (current === 'REPEAT_INFINITE') return 'REPEAT_ONCE';
@@ -441,7 +449,7 @@ export const PlayerProvider = ({ children }) => {
       isLoading, error, showFullScreenPlayer, isSeekable,
       queue, currentIndex, currentPlaylistId, repeatMode,
       playSong, togglePlay, seek, changeVolume, toggleMute, clearError,
-      toggleFullScreenPlayer, playPlaylist, playNext, playPrevious, addToQueue, toggleRepeatMode,
+      toggleFullScreenPlayer, closePlayer, playPlaylist, playNext, playPrevious, addToQueue, toggleRepeatMode,
     }}>
       {children}
     </PlayerContext.Provider>

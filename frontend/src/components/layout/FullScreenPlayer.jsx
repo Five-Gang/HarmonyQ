@@ -1,6 +1,6 @@
 import { usePlayer } from '../../context/PlayerContext';
 import {
-  Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Repeat, Repeat1
+  Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Repeat, Repeat1, X
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,7 +28,7 @@ export default function FullScreenPlayer() {
     currentSong, isPlaying, progress, duration, volume, isMuted,
     isLoading, showFullScreenPlayer, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute,
-    playNext, playPrevious, repeatMode, toggleRepeatMode,
+    playNext, playPrevious, repeatMode, toggleRepeatMode, closePlayer,
   } = usePlayer();
 
   const [isFavorite, setIsFavorite] = useState(false);
@@ -48,7 +48,13 @@ export default function FullScreenPlayer() {
           <ChevronDown className="w-6 h-6" />
         </button>
         <h1 className="text-sm font-semibold text-slate-300">NOW PLAYING</h1>
-        <div className="w-6" /> {/* Spacer */}
+        <button
+          onClick={closePlayer}
+          className="text-white hover:text-slate-300 transition-colors"
+          title="Close player"
+        >
+          <X className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Main Content */}
