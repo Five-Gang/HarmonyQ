@@ -30,9 +30,11 @@ export default function MiniPlayer() {
     isLoading, error, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute, clearError,
     playNext, playPrevious, repeatMode, toggleRepeatMode,
+    queue, currentIndex,
   } = usePlayer();
 
   const { collapsed } = useSidebar();
+  const nextSong = queue && currentIndex !== -1 && currentIndex < queue.length - 1 ? queue[currentIndex + 1] : null;
 
   if (error && !currentSong) {
     return (
@@ -186,6 +188,42 @@ export default function MiniPlayer() {
             className="w-20 h-1 accent-brand-500 cursor-pointer"
           />
         </div>
+
+        {/* Next song preview (small) - hidden on small screens */}
+        {nextSong && (
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0 pl-4 border-l border-white/10">
+            <div className="text-right">
+              <p className="text-xs text-slate-500">Next</p>
+              <p className="text-xs font-medium text-white truncate max-w-[120px]">{nextSong.title}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-surface-3 flex-shrink-0 overflow-hidden">
+              {nextSong.coverUrl || nextSong.coverArt ? (
+                <img
+                  src={nextSong.coverUrl || nextSong.coverArt}
+                  alt={nextSong.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <Music className="w-3 h-3 text-slate-600" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Close button */}
+        <button
+          onClick={() => {
+            if (currentSong) {
+              togglePlay();
+            }
+          }}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-2 transition-colors flex-shrink-0"
+          title="Pause player"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

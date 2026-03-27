@@ -29,7 +29,7 @@ export const SongCard = ({ song, onAddToPlaylist, showActions = true }) => {
   };
 
   return (
-    <div className="card-hover group relative overflow-hidden">
+    <div className="card-hover group relative overflow-visible">
       {/* Cover Art */}
       <div className="relative h-44 bg-gradient-to-br from-surface-3 to-surface-4 overflow-hidden rounded-t-2xl">
         {song.coverUrl || song.coverArt ? (
