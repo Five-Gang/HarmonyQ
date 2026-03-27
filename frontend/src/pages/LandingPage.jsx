@@ -149,9 +149,7 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-              <Music2 className="w-5 h-5 text-white" />
-            </div>
+            <img src="/logo.svg" alt="Harmoniq" className="w-14 h-14 group-hover:scale-105 transition-transform" />
             <span className="text-xl font-bold text-white tracking-tight">Harmoniq</span>
           </Link>
 
