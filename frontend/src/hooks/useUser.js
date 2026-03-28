@@ -63,3 +63,34 @@ export const useRecommendations = (clerkUserId) =>
     enabled: !!clerkUserId,
     staleTime: 1000 * 60 * 5,
   });
+
+export const useTrendingSongs = (limit = 20) =>
+  useQuery({
+    queryKey: ['trending', limit],
+    queryFn: () => recommendationService.getTrendingSongs(limit),
+    staleTime: 1000 * 60 * 10,
+  });
+
+export const useRecommendationsByGenre = (clerkUserId, genres, limit = 20, enabled = true) =>
+  useQuery({
+    queryKey: ['recommendations-genre', clerkUserId, genres, limit],
+    queryFn: () => recommendationService.getRecommendationsByGenre(clerkUserId, genres, limit),
+    enabled: !!clerkUserId && enabled && !!genres?.length,
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useSimilarSongs = (songId, limit = 10, enabled = true) =>
+  useQuery({
+    queryKey: ['similar-songs', songId, limit],
+    queryFn: () => recommendationService.getSimilarSongs(songId, limit),
+    enabled: !!songId && enabled,
+    staleTime: 1000 * 60 * 10,
+  });
+
+export const useUserPreferences = (clerkUserId, enabled = true) =>
+  useQuery({
+    queryKey: ['user-preferences', clerkUserId],
+    queryFn: () => recommendationService.getUserPreferences(clerkUserId),
+    enabled: !!clerkUserId && enabled,
+    staleTime: 1000 * 60 * 5,
+  });
