@@ -16,6 +16,13 @@ export const usePlaylist = (id) =>
     enabled: !!id,
   });
 
+export const usePublicPlaylists = (params) =>
+  useQuery({
+    queryKey: ['playlists', 'public', params],
+    queryFn: () => playlistService.getPublicPlaylists(params),
+    staleTime: 1000 * 60 * 5,
+  });
+
 export const useCreatePlaylist = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -36,7 +43,22 @@ export const useUpdatePlaylist = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['playlists', id] });
       queryClient.invalidateQueries({ queryKey: ['playlists', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'public'] });
       toast.success('Playlist updated!');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useTogglePlaylistVisibility = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isPublic }) => playlistService.updatePlaylist(id, { isPublic }),
+    onSuccess: (data, { id, isPublic }) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists', id] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'public'] });
+      toast.success(isPublic ? 'Playlist is now public!' : 'Playlist is now private!');
     },
     onError: (err) => toast.error(err.message),
   });

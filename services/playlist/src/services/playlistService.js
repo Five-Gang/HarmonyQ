@@ -73,6 +73,27 @@ class PlaylistService {
   }
 
   /**
+   * Get all public playlists (browse all public playlists)
+   */
+  async getPublicPlaylists({ page = 1, limit = 20 } = {}) {
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, parseInt(limit));
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = { isPublic: true, isActive: true };
+
+    const [playlists, total] = await Promise.all([
+      Playlist.find(query).sort({ followerCount: -1, updatedAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Playlist.countDocuments(query),
+    ]);
+
+    return {
+      playlists,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    };
+  }
+
+  /**
    * Update playlist metadata
    */
   async updatePlaylist(id, clerkUserId, updates) {

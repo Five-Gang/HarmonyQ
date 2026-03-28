@@ -19,6 +19,14 @@ class PlaylistController {
     } catch (error) { next(error); }
   }
 
+  async getPublicPlaylists(req, res, next) {
+    try {
+      const { page, limit } = req.query;
+      const result = await playlistService.getPublicPlaylists({ page, limit });
+      res.status(200).json({ success: true, ...result });
+    } catch (error) { next(error); }
+  }
+
   async getUserPlaylists(req, res, next) {
     try {
       const { clerkUserId } = req.params;

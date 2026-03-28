@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { ListMusic, Plus, Globe, Lock } from 'lucide-react';
-import { useUserPlaylists, useCreatePlaylist, useUpdatePlaylist } from '../hooks/usePlaylists';
+import { useUserPlaylists, usePublicPlaylists, useCreatePlaylist, useUpdatePlaylist } from '../hooks/usePlaylists';
 import { PlaylistCard } from '../components/playlists/PlaylistCard.jsx';
 import { Modal, FormField } from '../components/ui/index.jsx';
 import { SkeletonCard, EmptyState, ErrorState } from '../components/ui/LoadingStates.jsx';
@@ -9,8 +9,10 @@ import { SkeletonCard, EmptyState, ErrorState } from '../components/ui/LoadingSt
 const INITIAL_FORM = { name: '', description: '', isPublic: false };
 
 export default function PlaylistsPage() {
+  const [activeTab, setActiveTab] = useState('my-playlists');
   const { user } = useUser();
   const { data, isLoading, error, refetch } = useUserPlaylists(user?.id);
+  const { data: publicData, isLoading: publicLoading } = usePublicPlaylists({ limit: 20 });
   const createPlaylist = useCreatePlaylist();
   const updatePlaylist = useUpdatePlaylist();
 
@@ -19,6 +21,7 @@ export default function PlaylistsPage() {
   const [form, setForm] = useState(INITIAL_FORM);
 
   const playlists = data?.playlists || [];
+  const publicPlaylists = publicData?.playlists || [];
 
   const openCreate = () => {
     setEditingPlaylist(null);
@@ -43,37 +46,90 @@ export default function PlaylistsPage() {
     setForm(INITIAL_FORM);
   };
 
+  const tabClasses = (tab) => `px-6 py-3 font-medium transition-all flex items-center gap-2 ${
+    activeTab === tab
+      ? 'text-accent-400 border-b-2 border-accent-400'
+      : 'text-muted hover:text-foreground'
+  }`;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">My Playlists</h1>
-          <p className="text-muted mt-1">{playlists.length} playlist{playlists.length !== 1 ? 's' : ''}</p>
+          <h1 className="page-title">Playlists</h1>
+          <p className="text-muted mt-1">Create and explore playlists</p>
         </div>
         <button onClick={openCreate} className="btn-primary">
           <Plus className="w-4 h-4" /> New Playlist
         </button>
       </div>
 
-      {error ? (
-        <ErrorState message={error.message} onRetry={refetch} />
-      ) : isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      ) : playlists.length === 0 ? (
-        <EmptyState
-          icon={ListMusic}
-          title="No playlists yet"
-          description="Create your first playlist to start organizing your music."
-          action={<button onClick={openCreate} className="btn-primary">Create Playlist</button>}
-        />
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {playlists.map((pl) => (
-            <PlaylistCard key={pl._id} playlist={pl} onEdit={openEdit} />
-          ))}
-        </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-slate-800 flex gap-8">
+        <button
+          onClick={() => setActiveTab('my-playlists')}
+          className={tabClasses('my-playlists')}
+        >
+          <ListMusic className="w-5 h-5" />
+          My Playlists
+        </button>
+        <button
+          onClick={() => setActiveTab('public-playlists')}
+          className={tabClasses('public-playlists')}
+        >
+          <Globe className="w-5 h-5" />
+          Browse Public
+        </button>
+      </div>
+
+      {/* My Playlists Tab */}
+      {activeTab === 'my-playlists' && (
+        <>
+          {error ? (
+            <ErrorState message={error.message} onRetry={refetch} />
+          ) : isLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : playlists.length === 0 ? (
+            <EmptyState
+              icon={ListMusic}
+              title="No playlists yet"
+              description="Create your first playlist to start organizing your music."
+              action={<button onClick={openCreate} className="btn-primary">Create Playlist</button>}
+            />
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {playlists.map((pl) => (
+                <PlaylistCard key={pl._id} playlist={pl} onEdit={openEdit} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Public Playlists Tab */}
+      {activeTab === 'public-playlists' && (
+        <>
+          {publicLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : publicPlaylists.length === 0 ? (
+            <EmptyState
+              icon={Globe}
+              title="No public playlists yet"
+              description="Create a public playlist and share your music taste with others!"
+              action={<button onClick={openCreate} className="btn-primary">Create Public Playlist</button>}
+            />
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {publicPlaylists.map((pl) => (
+                <PlaylistCard key={pl._id} playlist={pl} />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create/Edit Modal */}

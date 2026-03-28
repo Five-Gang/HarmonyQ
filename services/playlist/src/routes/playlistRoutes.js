@@ -12,6 +12,27 @@ const { authenticate } = require('../middleware/auth');
 
 /**
  * @swagger
+ * /playlists/public/browse:
+ *   get:
+ *     summary: Get all public playlists (browsable)
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Array of public playlists
+ */
+router.get('/public/browse', authenticate, playlistController.getPublicPlaylists);
+
+/**
+ * @swagger
  * /playlists/{id}:
  *   get:
  *     summary: Get playlist by ID

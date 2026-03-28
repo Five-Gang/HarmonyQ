@@ -4,7 +4,7 @@ import { ArrowLeft, ListMusic, Globe, Lock, Plus, Music, Edit, Trash2, Play, Gri
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { usePlaylist } from '../hooks/usePlaylists';
-import { useRemoveSongFromPlaylist, useReorderSongs, useUpdatePlaylist } from '../hooks/usePlaylists';
+import { useRemoveSongFromPlaylist, useReorderSongs, useUpdatePlaylist, useTogglePlaylistVisibility } from '../hooks/usePlaylists';
 import { useSongs } from '../hooks/useSongs';
 import { useAddSongsToPlaylist } from '../hooks/usePlaylists';
 import { usePlayer } from '../context/PlayerContext';
@@ -44,6 +44,7 @@ export default function PlaylistDetailPage() {
   const addSongs = useAddSongsToPlaylist();
   const reorderSongs = useReorderSongs();
   const updatePlaylist = useUpdatePlaylist();
+  const toggleVisibility = useTogglePlaylistVisibility();
 
   // Fetch songs for the modal - increased limit with pagination
   const { data: songSearchData, isLoading: searchLoading } = useSongs({
@@ -266,9 +267,22 @@ export default function PlaylistDetailPage() {
                 </button>
               )}
               {isOwner && (
-                <button onClick={() => setShowAddSongs(true)} className="btn-secondary">
-                  <Plus className="w-4 h-4" /> Add Songs
-                </button>
+                <>
+                  <button onClick={() => setShowAddSongs(true)} className="btn-secondary">
+                    <Plus className="w-4 h-4" /> Add Songs
+                  </button>
+                  <button 
+                    onClick={() => toggleVisibility.mutate({ id, isPublic: !playlist.isPublic })}
+                    disabled={toggleVisibility.isPending}
+                    className={`btn-${playlist.isPublic ? 'secondary' : 'secondary'} `}
+                  >
+                    {playlist.isPublic ? (
+                      <><Globe className="w-4 h-4" /> Make Private</>
+                    ) : (
+                      <><Lock className="w-4 h-4" /> Make Public</>
+                    )}
+                  </button>
+                </>
               )}
             </div>
           </div>
