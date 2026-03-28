@@ -35,6 +35,18 @@ export const useCreateSong = () => {
   });
 };
 
+export const useUpdateSong = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ songId, data }) => songService.updateSong(songId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['songs'] });
+      toast.success('Song updated successfully!');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 export const useDeleteSong = () => {
   const queryClient = useQueryClient();
   return useMutation({
