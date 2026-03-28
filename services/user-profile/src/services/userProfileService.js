@@ -162,6 +162,71 @@ class UserProfileService {
         .map((h) => h.songId),
     };
   }
+
+  /**
+   * Get all favorite songs
+   */
+  async getFavorites(clerkUserId) {
+    const profile = await UserProfile.findOne({ clerkUserId, isActive: true })
+      .select('favoriteSongIds')
+      .lean();
+
+    if (!profile) {
+      const err = new Error('User profile not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    return {
+      favoriteSongIds: profile.favoriteSongIds || [],
+    };
+  }
+
+  /**
+   * Add a song to favorites
+   */
+  async addToFavorites(clerkUserId, songId) {
+    const profile = await UserProfile.findOneAndUpdate(
+      { clerkUserId, isActive: true },
+      {
+        $addToSet: { favoriteSongIds: songId },
+        $set: { lastActiveAt: new Date() },
+      },
+      { new: true }
+    );
+
+    if (!profile) {
+      const err = new Error('User profile not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    logger.info('Song added to favorites', { clerkUserId, songId });
+    return { message: 'Added to favorites', favoriteSongIds: profile.favoriteSongIds };
+  }
+
+  /**
+   * Remove a song from favorites
+   */
+  async removeFromFavorites(clerkUserId, songId) {
+    const profile = await UserProfile.findOneAndUpdate(
+      { clerkUserId, isActive: true },
+      {
+        $pull: { favoriteSongIds: songId },
+        $set: { lastActiveAt: new Date() },
+      },
+      { new: true }
+    );
+
+    if (!profile) {
+      const err = new Error('User profile not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    logger.info('Song removed from favorites', { clerkUserId, songId });
+    return { message: 'Removed from favorites', favoriteSongIds: profile.favoriteSongIds };
+  }
 }
 
 module.exports = new UserProfileService();

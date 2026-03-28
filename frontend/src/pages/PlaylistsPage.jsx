@@ -1,18 +1,58 @@
 import { useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { ListMusic, Plus, Globe, Lock } from 'lucide-react';
+import { ListMusic, Plus, Globe, Lock, Heart } from 'lucide-react';
 import { useUserPlaylists, usePublicPlaylists, useCreatePlaylist, useUpdatePlaylist } from '../hooks/usePlaylists';
+import { useSongs } from '../hooks/useSongs';
+import { useFavorites } from '../hooks/useUser';
 import { PlaylistCard } from '../components/playlists/PlaylistCard.jsx';
+import { SongCard } from '../components/songs/SongCard.jsx';
 import { Modal, FormField } from '../components/ui/index.jsx';
 import { SkeletonCard, EmptyState, ErrorState } from '../components/ui/LoadingStates.jsx';
 
 const INITIAL_FORM = { name: '', description: '', isPublic: false };
+
+function FavoritesGrid({ favoriteSongIds }) {
+  const { data: songsData, isLoading } = useSongs({
+    limit: 100,
+    search: undefined,
+  });
+
+  const allSongs = songsData?.songs || [];
+  const favoriteSongs = allSongs.filter((song) => favoriteSongIds.includes(song._id));
+
+  if (isLoading) {
+    return (
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    );
+  }
+
+  if (favoriteSongs.length === 0) {
+    return (
+      <EmptyState
+        icon={Heart}
+        title="No favorite songs found"
+        description="Your loved songs will appear here."
+      />
+    );
+  }
+
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {favoriteSongs.map((song) => (
+        <SongCard key={song._id} song={song} />
+      ))}
+    </div>
+  );
+}
 
 export default function PlaylistsPage() {
   const [activeTab, setActiveTab] = useState('my-playlists');
   const { user } = useUser();
   const { data, isLoading, error, refetch } = useUserPlaylists(user?.id);
   const { data: publicData, isLoading: publicLoading } = usePublicPlaylists({ limit: 20 });
+  const { data: favoritesData, isLoading: favoritesLoading } = useFavorites(user?.id);
   const createPlaylist = useCreatePlaylist();
   const updatePlaylist = useUpdatePlaylist();
 
@@ -22,6 +62,7 @@ export default function PlaylistsPage() {
 
   const playlists = data?.playlists || [];
   const publicPlaylists = publicData?.playlists || [];
+  const favoriteSongIds = favoritesData?.favoriteSongIds || [];
 
   const openCreate = () => {
     setEditingPlaylist(null);
@@ -80,6 +121,13 @@ export default function PlaylistsPage() {
           <Globe className="w-5 h-5" />
           Browse Public
         </button>
+        <button
+          onClick={() => setActiveTab('favorites')}
+          className={tabClasses('favorites')}
+        >
+          <Heart className="w-5 h-5" />
+          Favorites
+        </button>
       </div>
 
       {/* My Playlists Tab */}
@@ -128,6 +176,25 @@ export default function PlaylistsPage() {
                 <PlaylistCard key={pl._id} playlist={pl} />
               ))}
             </div>
+          )}
+        </>
+      )}
+
+      {/* Favorites Tab */}
+      {activeTab === 'favorites' && (
+        <>
+          {favoritesLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : favoriteSongIds.length === 0 ? (
+            <EmptyState
+              icon={Heart}
+              title="No favorite songs yet"
+              description="Heart songs while playing to add them to your favorites."
+            />
+          ) : (
+            <FavoritesGrid favoriteSongIds={favoriteSongIds} />
           )}
         </>
       )}

@@ -88,6 +88,45 @@ class UserProfileController {
       next(error);
     }
   }
+
+  async getFavorites(req, res, next) {
+    try {
+      const { clerkUserId } = req.params;
+      if (req.auth.userId !== clerkUserId && !req.auth.roles.includes('admin')) {
+        return res.status(403).json({ success: false, error: 'Forbidden', message: 'Access denied' });
+      }
+      const result = await userProfileService.getFavorites(clerkUserId);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async addToFavorites(req, res, next) {
+    try {
+      const { clerkUserId, songId } = req.params;
+      if (req.auth.userId !== clerkUserId) {
+        return res.status(403).json({ success: false, error: 'Forbidden', message: 'Access denied' });
+      }
+      const result = await userProfileService.addToFavorites(clerkUserId, songId);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeFromFavorites(req, res, next) {
+    try {
+      const { clerkUserId, songId } = req.params;
+      if (req.auth.userId !== clerkUserId) {
+        return res.status(403).json({ success: false, error: 'Forbidden', message: 'Access denied' });
+      }
+      const result = await userProfileService.removeFromFavorites(clerkUserId, songId);
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new UserProfileController();

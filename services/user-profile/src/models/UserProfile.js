@@ -60,6 +60,10 @@ const userProfileSchema = new mongoose.Schema(
       type: [listeningHistorySchema],
       default: [],
     },
+    favoriteSongIds: {
+      type: [{ type: String }],
+      default: [],
+    },
     totalListeningTime: {
       type: Number,
       default: 0,

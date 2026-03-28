@@ -3,6 +3,8 @@ import {
   Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Repeat, Repeat1, X, BookOpen
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import { useFavorites, useAddFavorite, useRemoveFavorite } from '../../hooks/useUser';
 
 const formatTime = (sec) => {
   if (!sec || isNaN(sec)) return '0:00';
@@ -56,9 +58,30 @@ export default function FullScreenPlayer() {
     playNext, playPrevious, repeatMode, toggleRepeatMode, closePlayer,
   } = usePlayer();
 
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { userId } = useAuth();
+  const { data: favoritesData } = useFavorites(userId);
+  const addFavorite = useAddFavorite();
+  const removeFavorite = useRemoveFavorite();
+
   const [showLyrics, setShowLyrics] = useState(false);
   const detectedLanguage = currentSong?.lyrics ? detectLanguage(currentSong.lyrics) : 'en';
+
+  const favoriteSongIds = favoritesData?.favoriteSongIds || [];
+  const isFavorite = currentSong?._id && favoriteSongIds.includes(currentSong._id);
+
+  const handleToggleFavorite = async () => {
+    if (!userId || !currentSong?._id) return;
+    
+    try {
+      if (isFavorite) {
+        await removeFavorite.mutateAsync({ clerkUserId: userId, songId: currentSong._id });
+      } else {
+        await addFavorite.mutateAsync({ clerkUserId: userId, songId: currentSong._id });
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+    }
+  };
 
   // Debug: log when current song changes
   useEffect(() => {
@@ -245,10 +268,12 @@ export default function FullScreenPlayer() {
         <div className="flex items-center justify-center gap-8 mb-8">
           {/* Favorite Button */}
           <button
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={handleToggleFavorite}
+            disabled={addFavorite.isPending || removeFavorite.isPending}
             className={`transition-colors ${
               isFavorite ? 'text-red-500' : 'text-slate-400 hover:text-white'
-            }`}
+            } disabled:opacity-50`}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <Heart className="w-6 h-6" fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
