@@ -78,6 +78,11 @@ const songSchema = new mongoose.Schema(
       key: String,
       mood: String,
     },
+    lyrics: {
+      type: String,
+      default: null,
+      comment: 'Lyrics of the song (multi-line text)',
+    },
   },
   {
     timestamps: true,

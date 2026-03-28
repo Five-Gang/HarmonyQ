@@ -154,6 +154,70 @@ router.post('/:clerkUserId/history', authenticate, userProfileController.addToHi
 
 /**
  * @swagger
+ * /users/{clerkUserId}/favorites:
+ *   get:
+ *     summary: Get all favorite songs
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: clerkUserId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Array of favorite song IDs
+ */
+router.get('/:clerkUserId/favorites', authenticate, userProfileController.getFavorites);
+
+/**
+ * @swagger
+ * /users/{clerkUserId}/favorites/{songId}:
+ *   post:
+ *     summary: Add a song to favorites
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: clerkUserId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: songId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Added to favorites
+ */
+router.post('/:clerkUserId/favorites/:songId', authenticate, userProfileController.addToFavorites);
+
+/**
+ * @swagger
+ * /users/{clerkUserId}/favorites/{songId}:
+ *   delete:
+ *     summary: Remove a song from favorites
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: clerkUserId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: songId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Removed from favorites
+ */
+router.delete('/:clerkUserId/favorites/:songId', authenticate, userProfileController.removeFromFavorites);
+
+/**
+ * @swagger
  * /users/{clerkUserId}/internal/preferences:
  *   get:
  *     summary: Internal endpoint for recommendation engine to fetch user preferences

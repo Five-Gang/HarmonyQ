@@ -110,3 +110,31 @@ export const useReorderSongs = () => {
     onError: (err) => toast.error(err.message),
   });
 };
+
+export const useDuplicatePlaylist = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ playlistId, playlist }) => {
+      // Create new playlist with "Copy of" prefix
+      const newName = `Copy of ${playlist.name}`;
+      const newPlaylist = await playlistService.createPlaylist({
+        name: newName,
+        description: playlist.description,
+        isPublic: false, // Duplicated playlists are always private
+      });
+      
+      // If original has songs, add them to the new playlist
+      if (playlist.songIds && playlist.songIds.length > 0) {
+        await playlistService.addSongs(newPlaylist.data._id, playlist.songIds);
+      }
+      
+      return newPlaylist;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists'] });
+      toast.success('Playlist duplicated!');
+      return data;
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};

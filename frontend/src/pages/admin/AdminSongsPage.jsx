@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import {
   Plus, Search, Trash2, Edit3, Music2, Clock, Disc3,
-  ChevronDown, MoreHorizontal, X, Filter, Download
+  ChevronDown, MoreHorizontal, X, Filter, Download, BookOpen
 } from 'lucide-react';
-import { useSongs, useCreateSong, useDeleteSong } from '../../hooks/useSongs';
+import { useSongs, useCreateSong, useDeleteSong, useUpdateSong } from '../../hooks/useSongs';
 import { SearchBar, Modal, FormField, Pagination, Badge } from '../../components/ui/index.jsx';
 import { SkeletonList, EmptyState, ErrorState } from '../../components/ui/LoadingStates.jsx';
 import { extractAudioMetadata } from '../../utils/audioMetadata.js';
@@ -29,7 +29,7 @@ function formatDuration(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-const emptySong = { title: '', artist: '', album: '', genre: 'Pop', duration: '', releaseYear: '', audioFile: null, coverImage: null };
+const emptySong = { title: '', artist: '', album: '', genre: 'Pop', duration: '', releaseYear: '', audioFile: null, coverImage: null, lyrics: '' };
 
 export default function AdminSongsPage() {
   const [page, setPage] = useState(1);
@@ -37,6 +37,7 @@ export default function AdminSongsPage() {
   const [selectedGenre, setSelectedGenre] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(null);
   const [newSong, setNewSong] = useState({ ...emptySong });
   const [openMenu, setOpenMenu] = useState(null);
   const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
@@ -52,6 +53,7 @@ export default function AdminSongsPage() {
 
   const createSong = useCreateSong();
   const deleteSong = useDeleteSong();
+  const updateSong = useUpdateSong();
 
   const songs = data?.songs || [];
   const pagination = data?.pagination;
@@ -101,18 +103,41 @@ export default function AdminSongsPage() {
       formData.append('title', newSong.title);
       formData.append('artist', newSong.artist);
       formData.append('album', newSong.album);
-      formData.append('genre', newSong.genre); // The backend parser stringifies it
+      formData.append('genre', newSong.genre);
       formData.append('duration', parseInt(newSong.duration));
       formData.append('releaseYear', parseInt(newSong.releaseYear));
+      if (newSong.lyrics) {
+        formData.append('lyrics', newSong.lyrics);
+      }
       
-      formData.append('audioFile', newSong.audioFile); // The actual MP3 file
+      formData.append('audioFile', newSong.audioFile);
       if (newSong.coverImage) {
-        formData.append('coverImage', newSong.coverImage); // Image picture
+        formData.append('coverImage', newSong.coverImage);
       }
 
       await createSong.mutateAsync(formData);
       setShowAddModal(false);
       setNewSong({ ...emptySong });
+    } catch (err) {
+      // error handled by hook
+    }
+  };
+
+  const handleEditSong = async (e) => {
+    e.preventDefault();
+    if (!showEditModal._id) return;
+
+    try {
+      const updateData = {
+        title: showEditModal.title,
+        artist: showEditModal.artist,
+        album: showEditModal.album,
+        genre: showEditModal.genre,
+        lyrics: showEditModal.lyrics || '',
+      };
+      
+      await updateSong.mutateAsync({ songId: showEditModal._id, data: updateData });
+      setShowEditModal(null);
     } catch (err) {
       // error handled by hook
     }
@@ -264,6 +289,15 @@ export default function AdminSongsPage() {
               <div className="flex items-center justify-end gap-1">
                 <button
                   onClick={() => {
+                    setShowEditModal({ ...song });
+                  }}
+                  className="p-2 rounded-lg text-slate-500 hover:text-accent-400 hover:bg-accent-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Edit song"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
                     setShowDeleteModal(song);
                   }}
                   className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
@@ -387,6 +421,17 @@ export default function AdminSongsPage() {
             </FormField>
           </div>
 
+          {/* Lyrics */}
+          <FormField label="Lyrics" id="admin-lyrics">
+            <textarea
+              id="admin-lyrics"
+              className="input min-h-48 resize-none"
+              placeholder="Paste song lyrics here (optional)..."
+              value={newSong.lyrics}
+              onChange={(e) => setNewSong((s) => ({ ...s, lyrics: e.target.value }))}
+            />
+          </FormField>
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary flex-1">
               Cancel
@@ -404,6 +449,74 @@ export default function AdminSongsPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Edit Song Modal */}
+      <Modal isOpen={!!showEditModal} onClose={() => setShowEditModal(null)} title="Edit Song" size="lg">
+        {showEditModal && (
+          <form onSubmit={handleEditSong} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label="Title" id="edit-title">
+                <input
+                  id="edit-title"
+                  className="input"
+                  value={showEditModal.title}
+                  onChange={(e) => setShowEditModal((s) => ({ ...s, title: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Artist" id="edit-artist">
+                <input
+                  id="edit-artist"
+                  className="input"
+                  value={showEditModal.artist}
+                  onChange={(e) => setShowEditModal((s) => ({ ...s, artist: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Album" id="edit-album">
+                <input
+                  id="edit-album"
+                  className="input"
+                  value={showEditModal.album}
+                  onChange={(e) => setShowEditModal((s) => ({ ...s, album: e.target.value }))}
+                />
+              </FormField>
+              <FormField label="Genre" id="edit-genre">
+                <select
+                  id="edit-genre"
+                  className="input"
+                  value={showEditModal.genre}
+                  onChange={(e) => setShowEditModal((s) => ({ ...s, genre: e.target.value }))}
+                >
+                  {GENRES.map((g) => <option key={g}>{g}</option>)}
+                </select>
+              </FormField>
+            </div>
+
+            <FormField label="Lyrics" id="edit-lyrics">
+              <textarea
+                id="edit-lyrics"
+                className="input min-h-48 resize-none"
+                placeholder="Paste or edit song lyrics here..."
+                value={showEditModal.lyrics || ''}
+                onChange={(e) => setShowEditModal((s) => ({ ...s, lyrics: e.target.value }))}
+              />
+            </FormField>
+
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={() => setShowEditModal(null)} className="btn-secondary flex-1">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updateSong.isPending}
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-brand-500 hover:from-accent-600 hover:to-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-glow active:scale-95 disabled:opacity-50"
+              >
+                <BookOpen className="w-4 h-4" />
+                {updateSong.isPending ? 'Updating...' : 'Update Song'}
+              </button>
+            </div>
+          </form>
+        )}
       </Modal>
 
       {/* Delete Confirmation Modal */}

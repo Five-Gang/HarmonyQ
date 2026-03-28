@@ -94,3 +94,34 @@ export const useUserPreferences = (clerkUserId, enabled = true) =>
     enabled: !!clerkUserId && enabled,
     staleTime: 1000 * 60 * 5,
   });
+
+export const useFavorites = (clerkUserId) =>
+  useQuery({
+    queryKey: ['favorites', clerkUserId],
+    queryFn: () => userService.getFavorites(clerkUserId),
+    enabled: !!clerkUserId,
+  });
+
+export const useAddFavorite = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ clerkUserId, songId }) => userService.addToFavorites(clerkUserId, songId),
+    onSuccess: (_, { clerkUserId }) => {
+      queryClient.invalidateQueries({ queryKey: ['favorites', clerkUserId] });
+      toast.success('Added to favorites!');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useRemoveFavorite = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ clerkUserId, songId }) => userService.removeFromFavorites(clerkUserId, songId),
+    onSuccess: (_, { clerkUserId }) => {
+      queryClient.invalidateQueries({ queryKey: ['favorites', clerkUserId] });
+      toast.success('Removed from favorites!');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
