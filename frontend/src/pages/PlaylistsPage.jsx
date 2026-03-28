@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { ListMusic, Plus, Globe, Lock, Heart } from 'lucide-react';
+import { ListMusic, Plus, Globe, Lock, Heart, ArrowDown, ArrowUp } from 'lucide-react';
 import { useUserPlaylists, usePublicPlaylists, useCreatePlaylist, useUpdatePlaylist } from '../hooks/usePlaylists';
 import { useSongs } from '../hooks/useSongs';
 import { useFavorites } from '../hooks/useUser';
@@ -49,6 +49,8 @@ function FavoritesGrid({ favoriteSongIds }) {
 
 export default function PlaylistsPage() {
   const [activeTab, setActiveTab] = useState('my-playlists');
+  const [sortBy, setSortBy] = useState('recent'); // recent, songs, duration, name-asc, name-desc
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const { user } = useUser();
   const { data, isLoading, error, refetch } = useUserPlaylists(user?.id);
   const { data: publicData, isLoading: publicLoading } = usePublicPlaylists({ limit: 20 });
@@ -63,6 +65,30 @@ export default function PlaylistsPage() {
   const playlists = data?.playlists || [];
   const publicPlaylists = publicData?.playlists || [];
   const favoriteSongIds = favoritesData?.favoriteSongIds || [];
+
+  // Sort function
+  const sortPlaylists = (items) => {
+    const sorted = [...items];
+    switch (sortBy) {
+      case 'songs':
+        return sorted.sort((a, b) => (b.songIds?.length || 0) - (a.songIds?.length || 0));
+      case 'duration':
+        return sorted.sort((a, b) => {
+          // This would need song data, for now sort by count as proxy
+          return (b.songIds?.length || 0) - (a.songIds?.length || 0);
+        });
+      case 'name-asc':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case 'name-desc':
+        return sorted.sort((a, b) => b.name.localeCompare(a.name));
+      case 'recent':
+      default:
+        return sorted.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    }
+  };
+
+  const sortedPlaylists = sortPlaylists(playlists);
+  const sortedPublicPlaylists = sortPlaylists(publicPlaylists);
 
   const openCreate = () => {
     setEditingPlaylist(null);
@@ -133,6 +159,65 @@ export default function PlaylistsPage() {
       {/* My Playlists Tab */}
       {activeTab === 'my-playlists' && (
         <>
+          {/* Sort Controls */}
+          {playlists.length > 0 && (
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm text-muted">Sort by:</span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortMenu(!showSortMenu)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 transition text-sm"
+                >
+                  {sortBy === 'recent' && 'Recently Modified'}
+                  {sortBy === 'songs' && 'Song Count'}
+                  {sortBy === 'duration' && 'Duration'}
+                  {sortBy === 'name-asc' && 'A to Z'}
+                  {sortBy === 'name-desc' && 'Z to A'}
+                  {sortBy === 'recent' && <ArrowDown className="w-4 h-4" />}
+                  {sortBy !== 'recent' && sortBy.includes('asc') && <ArrowUp className="w-4 h-4" />}
+                  {sortBy !== 'recent' && sortBy.includes('desc') && <ArrowDown className="w-4 h-4" />}
+                </button>
+
+                {showSortMenu && (
+                  <div className="absolute z-50 top-full mt-2 right-0 bg-slate-900 border border-slate-700 rounded-lg shadow-lg py-2 w-48">
+                    <button
+                      onClick={() => { setSortBy('recent'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'recent' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      Recently Modified
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('songs'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'songs' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      Most Songs
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('name-asc'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'name-asc' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      A to Z
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('name-desc'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'name-desc' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      Z to A
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {error ? (
             <ErrorState message={error.message} onRetry={refetch} />
           ) : isLoading ? (
@@ -148,7 +233,7 @@ export default function PlaylistsPage() {
             />
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {playlists.map((pl) => (
+              {sortedPlaylists.map((pl) => (
                 <PlaylistCard key={pl._id} playlist={pl} onEdit={openEdit} />
               ))}
             </div>
@@ -159,6 +244,65 @@ export default function PlaylistsPage() {
       {/* Public Playlists Tab */}
       {activeTab === 'public-playlists' && (
         <>
+          {/* Sort Controls */}
+          {publicPlaylists.length > 0 && (
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm text-muted">Sort by:</span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortMenu(!showSortMenu)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 transition text-sm"
+                >
+                  {sortBy === 'recent' && 'Recently Modified'}
+                  {sortBy === 'songs' && 'Song Count'}
+                  {sortBy === 'duration' && 'Duration'}
+                  {sortBy === 'name-asc' && 'A to Z'}
+                  {sortBy === 'name-desc' && 'Z to A'}
+                  {sortBy === 'recent' && <ArrowDown className="w-4 h-4" />}
+                  {sortBy !== 'recent' && sortBy.includes('asc') && <ArrowUp className="w-4 h-4" />}
+                  {sortBy !== 'recent' && sortBy.includes('desc') && <ArrowDown className="w-4 h-4" />}
+                </button>
+
+                {showSortMenu && (
+                  <div className="absolute z-50 top-full mt-2 right-0 bg-slate-900 border border-slate-700 rounded-lg shadow-lg py-2 w-48">
+                    <button
+                      onClick={() => { setSortBy('recent'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'recent' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      Recently Modified
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('songs'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'songs' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      Most Songs
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('name-asc'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'name-asc' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      A to Z
+                    </button>
+                    <button
+                      onClick={() => { setSortBy('name-desc'); setShowSortMenu(false); }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition ${
+                        sortBy === 'name-desc' ? 'bg-accent-500/10 text-accent-400' : 'hover:bg-slate-800 text-foreground'
+                      }`}
+                    >
+                      Z to A
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {publicLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -172,7 +316,7 @@ export default function PlaylistsPage() {
             />
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {publicPlaylists.map((pl) => (
+              {sortedPublicPlaylists.map((pl) => (
                 <PlaylistCard key={pl._id} playlist={pl} />
               ))}
             </div>

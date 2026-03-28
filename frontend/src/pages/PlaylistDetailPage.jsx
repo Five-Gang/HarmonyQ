@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { ArrowLeft, ListMusic, Globe, Lock, Plus, Music, Edit, Trash2, Play, GripVertical } from 'lucide-react';
+import { ArrowLeft, ListMusic, Globe, Lock, Plus, Music, Edit, Trash2, Play, GripVertical, Shuffle } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { usePlaylist } from '../hooks/usePlaylists';
@@ -141,6 +141,21 @@ export default function PlaylistDetailPage() {
     toast.success(`Playing ${playlistSongs.length} songs`);
   };
 
+  const handleShuffle = () => {
+    if (playlistSongs.length === 0) {
+      toast.error('No songs to shuffle');
+      return;
+    }
+    // Fisher-Yates shuffle algorithm
+    const shuffled = [...playlistSongs];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    playPlaylist(shuffled, id);
+    toast.success(`Shuffling ${playlistSongs.length} songs`);
+  };
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
@@ -220,6 +235,24 @@ export default function PlaylistDetailPage() {
 
   if (!playlist) return null;
 
+  // Calculate total duration
+  const totalDuration = playlistSongs.reduce((sum, song) => sum + (song.duration || 0), 0);
+  const hours = Math.floor(totalDuration / 3600);
+  const minutes = Math.floor((totalDuration % 3600) / 60);
+  const durationText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+  // Format dates
+  const createdDate = new Date(playlist.createdAt).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+  const updatedDate = new Date(playlist.updatedAt).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Back */}
@@ -258,13 +291,33 @@ export default function PlaylistDetailPage() {
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">{playlist.name}</h1>
             {playlist.description && <p className="text-slate-400 mb-4">{playlist.description}</p>}
-            <p className="text-slate-500 text-sm">{playlistSongs.length} songs</p>
+            
+            {/* Statistics */}
+            <div className="grid grid-cols-3 gap-4 mb-4 py-3 border-t border-b border-slate-700">
+              <div>
+                <p className="text-xs text-slate-500 uppercase font-semibold">Songs</p>
+                <p className="text-lg font-bold text-white">{playlistSongs.length}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase font-semibold">Duration</p>
+                <p className="text-lg font-bold text-white">{durationText}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase font-semibold">Updated</p>
+                <p className="text-lg font-bold text-white">{updatedDate}</p>
+              </div>
+            </div>
 
             <div className="flex gap-2 mt-4 flex-wrap">
               {playlistSongs.length > 0 && (
-                <button onClick={handlePlayAll} className="btn-primary">
-                  <Play className="w-4 h-4" /> Play All
-                </button>
+                <>
+                  <button onClick={handlePlayAll} className="btn-primary">
+                    <Play className="w-4 h-4" /> Play All
+                  </button>
+                  <button onClick={handleShuffle} className="btn-secondary">
+                    <Shuffle className="w-4 h-4" /> Shuffle
+                  </button>
+                </>
               )}
               {isOwner && (
                 <>
@@ -296,10 +349,10 @@ export default function PlaylistDetailPage() {
           <EmptyState
             icon={Music}
             title="No songs yet"
-            description={isOwner ? 'Add songs to this playlist.' : 'This playlist is empty.'}
+            description={isOwner ? 'This playlist is empty. Browse songs and add them to get started!' : 'This playlist is empty. Check back later!'}
             action={isOwner && (
               <button onClick={() => setShowAddSongs(true)} className="btn-primary">
-                Add Songs
+                <Plus className="w-4 h-4" /> Add Songs to Playlist
               </button>
             )}
           />

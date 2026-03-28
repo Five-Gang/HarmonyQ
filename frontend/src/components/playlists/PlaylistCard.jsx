@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { ListMusic, Lock, Globe, MoreVertical, Music, Trash2, Edit } from 'lucide-react';
+import { ListMusic, Lock, Globe, MoreVertical, Music, Trash2, Edit, Copy } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Badge } from '../ui/index.jsx';
-import { useDeletePlaylist } from '../../hooks/usePlaylists';
+import { useDeletePlaylist, useDuplicatePlaylist } from '../../hooks/usePlaylists';
 import { useNavigate } from 'react-router-dom';
 
 export const PlaylistCard = ({ playlist, onEdit }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const deletePlaylist = useDeletePlaylist();
+  const duplicatePlaylist = useDuplicatePlaylist();
   const navigate = useNavigate();
 
   const handleDelete = (e) => {
@@ -15,6 +16,12 @@ export const PlaylistCard = ({ playlist, onEdit }) => {
     if (confirm(`Delete "${playlist.name}"?`)) {
       deletePlaylist.mutate(playlist._id);
     }
+    setMenuOpen(false);
+  };
+
+  const handleDuplicate = (e) => {
+    e.stopPropagation();
+    duplicatePlaylist.mutate({ playlistId: playlist._id, playlist });
     setMenuOpen(false);
   };
 
@@ -60,7 +67,7 @@ export const PlaylistCard = ({ playlist, onEdit }) => {
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-white text-sm truncate">{playlist.name}</h3>
             {playlist.description && (
-              <p className="text-slate-500 text-xs truncate mt-0.5">{playlist.description}</p>
+              <p className="text-slate-500 text-xs mt-1 line-clamp-2">{playlist.description}</p>
             )}
           </div>
         </div>
@@ -85,6 +92,9 @@ export const PlaylistCard = ({ playlist, onEdit }) => {
             <div className="dropdown right-0 top-8">
               <button onClick={(e) => { e.stopPropagation(); onEdit?.(playlist); setMenuOpen(false); }} className="dropdown-item">
                 <Edit className="w-4 h-4" /> Edit
+              </button>
+              <button onClick={handleDuplicate} disabled={duplicatePlaylist.isPending} className="dropdown-item">
+                <Copy className="w-4 h-4" /> Duplicate
               </button>
               <button onClick={handleDelete} className="dropdown-item text-red-400 hover:text-red-300">
                 <Trash2 className="w-4 h-4" /> Delete

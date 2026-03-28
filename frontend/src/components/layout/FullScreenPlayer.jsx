@@ -1,10 +1,11 @@
 import { usePlayer } from '../../context/PlayerContext';
 import {
-  Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Repeat, Repeat1, X, BookOpen
+  Play, Pause, Volume2, VolumeX, Music, Loader2, ChevronDown, Heart, SkipBack, SkipForward, Repeat, Repeat1, X, BookOpen, ListPlus, Trash2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useFavorites, useAddFavorite, useRemoveFavorite } from '../../hooks/useUser';
+import { useUserPlaylists, useAddSongsToPlaylist, useRemoveSongFromPlaylist } from '../../hooks/usePlaylists';
 
 const formatTime = (sec) => {
   if (!sec || isNaN(sec)) return '0:00';
@@ -55,19 +56,26 @@ export default function FullScreenPlayer() {
     currentSong, isPlaying, progress, duration, volume, isMuted,
     isLoading, showFullScreenPlayer, toggleFullScreenPlayer,
     togglePlay, seek, changeVolume, toggleMute,
-    playNext, playPrevious, repeatMode, toggleRepeatMode, closePlayer,
+    playNext, playPrevious, repeatMode, toggleRepeatMode, closePlayer, currentPlaylistId,
   } = usePlayer();
 
   const { userId } = useAuth();
   const { data: favoritesData } = useFavorites(userId);
+  const { data: playlistsData } = useUserPlaylists(userId);
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
+  const addSongsToPlaylist = useAddSongsToPlaylist();
+  const removeSongFromPlaylist = useRemoveSongFromPlaylist();
 
   const [showLyrics, setShowLyrics] = useState(false);
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const detectedLanguage = currentSong?.lyrics ? detectLanguage(currentSong.lyrics) : 'en';
 
   const favoriteSongIds = favoritesData?.favoriteSongIds || [];
+  const userPlaylists = playlistsData?.playlists || [];
   const isFavorite = currentSong?._id && favoriteSongIds.includes(currentSong._id);
+  const currentPlaylist = userPlaylists.find(p => p._id === currentPlaylistId);
 
   const handleToggleFavorite = async () => {
     if (!userId || !currentSong?._id) return;
@@ -80,6 +88,36 @@ export default function FullScreenPlayer() {
       }
     } catch (err) {
       console.error('Error toggling favorite:', err);
+    }
+  };
+
+  const handleAddToPlaylist = async (playlistId) => {
+    if (!currentSong?._id) return;
+    
+    try {
+      await addSongsToPlaylist.mutateAsync({
+        id: playlistId,
+        songIds: [currentSong._id],
+      });
+      setShowPlaylistMenu(false);
+    } catch (err) {
+      console.error('Error adding to playlist:', err);
+    }
+  };
+
+  const handleRemoveSong = async () => {
+    if (!currentPlaylistId || !currentSong?._id) return;
+    
+    try {
+      await removeSongFromPlaylist.mutateAsync({
+        playlistId: currentPlaylistId,
+        songId: currentSong._id,
+      });
+      setShowRemoveConfirm(false);
+      // Skip to next song after removing
+      playNext();
+    } catch (err) {
+      console.error('Error removing song:', err);
     }
   };
 
@@ -328,7 +366,91 @@ export default function FullScreenPlayer() {
           >
             <BookOpen className="w-6 h-6" />
           </button>
+
+          {/* Add to Playlist Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
+              disabled={userPlaylists.length === 0}
+              className={`p-3 rounded-full transition-colors ${
+                userPlaylists.length === 0
+                  ? 'text-slate-600 cursor-not-allowed'
+                  : showPlaylistMenu
+                  ? 'text-accent-400 bg-accent-400/10'
+                  : 'text-slate-400 hover:text-white hover:bg-surface-2/20'
+              }`}
+              title={userPlaylists.length === 0 ? 'No playlists available' : 'Add to playlist'}
+            >
+              <ListPlus className="w-6 h-6" />
+            </button>
+
+            {/* Playlist Menu Dropdown */}
+            {showPlaylistMenu && userPlaylists.length > 0 && (
+              <div className="absolute top-full right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto">
+                {userPlaylists.map((playlist) => (
+                  <button
+                    key={playlist._id}
+                    onClick={() => handleAddToPlaylist(playlist._id)}
+                    disabled={addSongsToPlaylist.isPending}
+                    className="w-full text-left px-4 py-2 hover:bg-slate-700 transition-colors text-white text-sm disabled:opacity-50 first:rounded-t-lg last:rounded-b-lg"
+                  >
+                    {playlist.name}
+                    <span className="text-xs text-slate-400 block">{playlist.songIds?.length || 0} songs</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Remove from Playlist Button - Only shows when playing from a playlist */}
+          {currentPlaylistId && (
+            <button
+              onClick={() => setShowRemoveConfirm(true)}
+              disabled={removeSongFromPlaylist.isPending}
+              className="p-3 rounded-full text-slate-400 hover:text-red-400 hover:bg-red-400/10 disabled:opacity-50 transition-colors"
+              title={`Remove from ${currentPlaylist?.name || 'playlist'}`}
+            >
+              <Trash2 className="w-6 h-6" />
+            </button>
+          )}
         </div>
+
+        {/* Remove Confirmation Dialog */}
+        {showRemoveConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] animate-fade-in">
+            <div className="bg-slate-800 rounded-lg p-6 max-w-sm mx-4 border border-slate-700 shadow-xl animate-scale-in">
+              <h3 className="text-lg font-semibold text-white mb-2">Remove Song?</h3>
+              <p className="text-slate-300 mb-6">
+                Remove "{currentSong?.title}" from {currentPlaylist?.name || 'this playlist'}?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRemoveConfirm(false)}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRemoveSong}
+                  disabled={removeSongFromPlaylist.isPending}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {removeSongFromPlaylist.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Remove
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Volume Control */}
         <div className="flex items-center justify-center gap-4 max-w-lg mx-auto">
