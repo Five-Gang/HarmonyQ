@@ -303,116 +303,140 @@ export default function FullScreenPlayer() {
       {/* Controls */}
       <div className="px-4 md:px-8 py-8 border-t border-white/10">
         {/* Play/Pause + Controls */}
-        <div className="flex items-center justify-center gap-8 mb-8">
-          {/* Favorite Button */}
-          <button
-            onClick={handleToggleFavorite}
-            disabled={addFavorite.isPending || removeFavorite.isPending}
-            className={`transition-colors ${
-              isFavorite ? 'text-red-500' : 'text-slate-400 hover:text-white'
-            } disabled:opacity-50`}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Heart className="w-6 h-6" fill={isFavorite ? 'currentColor' : 'none'} />
-          </button>
+        <div className="flex items-center justify-between gap-8 mb-8">
+          {/* Left Side - Empty spacer for alignment */}
+          <div className="flex-1" />
 
-          {/* Previous */}
-          <button
-            onClick={playPrevious}
-            disabled={isLoading}
-            className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-surface-2/20 disabled:opacity-50 transition-colors"
-            title="Previous"
-          >
-            <SkipBack className="w-6 h-6" />
-          </button>
-
-          {/* Play/Pause */}
-          <button
-            onClick={togglePlay}
-            disabled={isLoading}
-            className="w-16 h-16 rounded-full bg-gradient-to-r from-brand-500 to-accent-500 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-lg hover:shadow-glow disabled:opacity-50"
-          >
-            {isLoading ? (
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="w-8 h-8 text-white fill-white" />
-            ) : (
-              <Play className="w-8 h-8 text-white fill-white ml-1" />
-            )}
-          </button>
-
-          {/* Next */}
-          <button
-            onClick={playNext}
-            disabled={isLoading}
-            className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-surface-2/20 disabled:opacity-50 transition-colors"
-            title="Next"
-          >
-            <SkipForward className="w-6 h-6" />
-          </button>
-
-          {/* Lyrics Button */}
-          <button
-            onClick={() => setShowLyrics(!showLyrics)}
-            disabled={!currentSong?.lyrics || currentSong.lyrics.trim().length === 0}
-            className={`p-3 rounded-full transition-colors ${
-              !currentSong?.lyrics || currentSong.lyrics.trim().length === 0
-                ? 'text-slate-600 cursor-not-allowed'
-                : showLyrics
-                ? 'text-accent-400 bg-accent-400/10 hover:text-accent-300'
-                : 'text-slate-400 hover:text-white hover:bg-surface-2/20'
-            }`}
-            title={currentSong?.lyrics && currentSong.lyrics.trim().length > 0 ? 'Show/Hide lyrics' : 'No lyrics available'}
-          >
-            <BookOpen className="w-6 h-6" />
-          </button>
-
-          {/* Add to Playlist Button */}
-          <div className="relative">
+          {/* Center Controls */}
+          <div className="flex items-center justify-center gap-8">
+            {/* Repeat Mode Button */}
             <button
-              onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
-              disabled={userPlaylists.length === 0}
+              onClick={toggleRepeatMode}
+              disabled={isLoading}
+              className={`transition-colors ${
+                repeatMode === 'REPEAT_INFINITE'
+                  ? 'text-brand-400 hover:text-brand-300'
+                  : repeatMode === 'REPEAT_ONCE'
+                  ? 'text-accent-400 hover:text-accent-300'
+                  : 'text-slate-400 hover:text-white'
+              } disabled:opacity-50`}
+              title={getRepeatTooltip(repeatMode)}
+            >
+              {getRepeatIcon(repeatMode)}
+            </button>
+
+            {/* Favorite Button */}
+            <button
+              onClick={handleToggleFavorite}
+              disabled={addFavorite.isPending || removeFavorite.isPending}
+              className={`transition-colors ${
+                isFavorite ? 'text-red-500' : 'text-slate-400 hover:text-white'
+              } disabled:opacity-50`}
+              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart className="w-6 h-6" fill={isFavorite ? 'currentColor' : 'none'} />
+            </button>
+
+            {/* Previous */}
+            <button
+              onClick={playPrevious}
+              disabled={isLoading}
+              className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-surface-2/20 disabled:opacity-50 transition-colors"
+              title="Previous"
+            >
+              <SkipBack className="w-6 h-6" />
+            </button>
+
+            {/* Play/Pause */}
+            <button
+              onClick={togglePlay}
+              disabled={isLoading}
+              className="w-16 h-16 rounded-full bg-gradient-to-r from-brand-500 to-accent-500 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-lg hover:shadow-glow disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              ) : isPlaying ? (
+                <Pause className="w-8 h-8 text-white fill-white" />
+              ) : (
+                <Play className="w-8 h-8 text-white fill-white ml-1" />
+              )}
+            </button>
+
+            {/* Next */}
+            <button
+              onClick={playNext}
+              disabled={isLoading}
+              className="p-3 rounded-full text-slate-400 hover:text-white hover:bg-surface-2/20 disabled:opacity-50 transition-colors"
+              title="Next"
+            >
+              <SkipForward className="w-6 h-6" />
+            </button>
+
+            {/* Add to Playlist Button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
+                disabled={userPlaylists.length === 0}
+                className={`p-3 rounded-full transition-colors ${
+                  userPlaylists.length === 0
+                    ? 'text-slate-600 cursor-not-allowed'
+                    : showPlaylistMenu
+                    ? 'text-accent-400 bg-accent-400/10'
+                    : 'text-slate-400 hover:text-white hover:bg-surface-2/20'
+                }`}
+                title={userPlaylists.length === 0 ? 'No playlists available' : 'Add to playlist'}
+              >
+                <ListPlus className="w-6 h-6" />
+              </button>
+
+              {/* Playlist Menu Dropdown */}
+              {showPlaylistMenu && userPlaylists.length > 0 && (
+                <div className="absolute top-full right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto">
+                  {userPlaylists.map((playlist) => (
+                    <button
+                      key={playlist._id}
+                      onClick={() => handleAddToPlaylist(playlist._id)}
+                      disabled={addSongsToPlaylist.isPending}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-700 transition-colors text-white text-sm disabled:opacity-50 first:rounded-t-lg last:rounded-b-lg"
+                    >
+                      {playlist.name}
+                      <span className="text-xs text-slate-400 block">{playlist.songIds?.length || 0} songs</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Lyrics Button */}
+            <button
+              onClick={() => setShowLyrics(!showLyrics)}
+              disabled={!currentSong?.lyrics || currentSong.lyrics.trim().length === 0}
               className={`p-3 rounded-full transition-colors ${
-                userPlaylists.length === 0
+                !currentSong?.lyrics || currentSong.lyrics.trim().length === 0
                   ? 'text-slate-600 cursor-not-allowed'
-                  : showPlaylistMenu
-                  ? 'text-accent-400 bg-accent-400/10'
+                  : showLyrics
+                  ? 'text-accent-400 bg-accent-400/10 hover:text-accent-300'
                   : 'text-slate-400 hover:text-white hover:bg-surface-2/20'
               }`}
-              title={userPlaylists.length === 0 ? 'No playlists available' : 'Add to playlist'}
+              title={currentSong?.lyrics && currentSong.lyrics.trim().length > 0 ? 'Show/Hide lyrics' : 'No lyrics available'}
             >
-              <ListPlus className="w-6 h-6" />
+              <BookOpen className="w-6 h-6" />
             </button>
-
-            {/* Playlist Menu Dropdown */}
-            {showPlaylistMenu && userPlaylists.length > 0 && (
-              <div className="absolute top-full right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto">
-                {userPlaylists.map((playlist) => (
-                  <button
-                    key={playlist._id}
-                    onClick={() => handleAddToPlaylist(playlist._id)}
-                    disabled={addSongsToPlaylist.isPending}
-                    className="w-full text-left px-4 py-2 hover:bg-slate-700 transition-colors text-white text-sm disabled:opacity-50 first:rounded-t-lg last:rounded-b-lg"
-                  >
-                    {playlist.name}
-                    <span className="text-xs text-slate-400 block">{playlist.songIds?.length || 0} songs</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Remove from Playlist Button - Only shows when playing from a playlist */}
-          {currentPlaylistId && (
-            <button
-              onClick={() => setShowRemoveConfirm(true)}
-              disabled={removeSongFromPlaylist.isPending}
-              className="p-3 rounded-full text-slate-400 hover:text-red-400 hover:bg-red-400/10 disabled:opacity-50 transition-colors"
-              title={`Remove from ${currentPlaylist?.name || 'playlist'}`}
-            >
-              <Trash2 className="w-6 h-6" />
-            </button>
-          )}
+          {/* Right Side - Remove from Playlist Button */}
+          <div className="flex-1 flex justify-end">
+            {currentPlaylistId && (
+              <button
+                onClick={() => setShowRemoveConfirm(true)}
+                disabled={removeSongFromPlaylist.isPending}
+                className="p-3 rounded-full text-slate-400 hover:text-red-400 hover:bg-red-400/10 disabled:opacity-50 transition-colors"
+                title={`Remove from ${currentPlaylist?.name || 'playlist'}`}
+              >
+                <Trash2 className="w-6 h-6" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Remove Confirmation Dialog */}
@@ -472,23 +496,7 @@ export default function FullScreenPlayer() {
           />
         </div>
 
-        {/* Repeat Mode Control */}
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <button
-            onClick={toggleRepeatMode}
-            disabled={isLoading}
-            className={`transition-colors ${
-              repeatMode === 'REPEAT_INFINITE'
-                ? 'text-brand-400 hover:text-brand-300'
-                : repeatMode === 'REPEAT_ONCE'
-                ? 'text-accent-400 hover:text-accent-300'
-                : 'text-slate-400 hover:text-white'
-            } disabled:opacity-50`}
-            title={getRepeatTooltip(repeatMode)}
-          >
-            {getRepeatIcon(repeatMode)}
-          </button>
-        </div>
+
       </div>
     </div>
   );

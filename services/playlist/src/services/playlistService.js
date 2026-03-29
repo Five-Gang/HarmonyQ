@@ -173,7 +173,16 @@ class PlaylistService {
     }
 
     const validIds = await validateSongIds(songIds, authToken);
+    const duplicateIds = validIds.filter((id) => playlist.songIds.includes(id));
     const newIds = validIds.filter((id) => !playlist.songIds.includes(id));
+    
+    // If all songs are duplicates, return specific message
+    if (newIds.length === 0) {
+      const err = new Error('This song is already in this playlist');
+      err.statusCode = 409;
+      throw err;
+    }
+
     playlist.songIds.push(...newIds);
 
     if (playlist.songIds.length > 500) {
