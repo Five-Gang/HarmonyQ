@@ -23,6 +23,30 @@ export const usePublicPlaylists = (params) =>
     staleTime: 1000 * 60 * 5,
   });
 
+export const useAdminPlaylists = (params) =>
+  useQuery({
+    queryKey: ['playlists', 'admin', params],
+    queryFn: () => playlistService.getAllPlaylistsAdmin(params),
+    staleTime: 1000 * 30, // Re-fetch every 30 seconds for admin views
+  });
+
+export const useSetPlaylistStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => playlistService.setPlaylistStatus(id, data),
+    onSuccess: (_, { id, data }) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', id] });
+      toast.success(
+        data.isActive !== undefined
+          ? (data.isActive ? 'Playlist activated' : 'Playlist deactivated')
+          : (data.isPublic ? 'Playlist is now public' : 'Playlist is now private')
+      );
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 export const useCreatePlaylist = () => {
   const queryClient = useQueryClient();
   return useMutation({

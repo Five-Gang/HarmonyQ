@@ -42,21 +42,23 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className={clsx('relative w-full card p-6 animate-slide-up', sizes[size])}>
-        <div className="flex items-center justify-between mb-6">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className={clsx('relative w-full card animate-slide-up max-h-[90vh] flex flex-col overflow-hidden', sizes[size])}>
+        <div className="flex items-center justify-between p-6 border-b border-white/10 flex-shrink-0">
           <h2 className="text-xl font-bold text-white">{title}</h2>
           <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-3 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto p-6">
+          {children}
+        </div>
       </div>
     </div>
   );
 };
 
-export const Badge = ({ children, variant = 'default', className }) => {
+export const Badge = ({ children, variant = 'default', className, icon: Icon, label, color = 'slate', size = 'md' }) => {
   const variants = {
     default: 'bg-surface-3 text-slate-300 border border-white/10',
     brand: 'badge-genre',
@@ -64,6 +66,32 @@ export const Badge = ({ children, variant = 'default', className }) => {
     muted: 'badge-private',
     accent: 'bg-accent-600/20 text-accent-400 border border-accent-600/30',
   };
+  
+  const colorStyles = {
+    green: 'bg-green-500/20 text-green-300 border border-green-500/30',
+    red: 'bg-red-500/20 text-red-300 border border-red-500/30',
+    blue: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+    slate: 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
+    brand: 'bg-brand-500/20 text-brand-300 border border-brand-500/30',
+    accent: 'bg-accent-500/20 text-accent-300 border border-accent-500/30',
+  };
+  
+  const sizeStyles = {
+    xs: 'text-xs px-2 py-1',
+    sm: 'text-sm px-2.5 py-1.5',
+    md: 'text-sm px-3 py-2',
+    lg: 'text-base px-4 py-2',
+  };
+  
+  if (Icon && label) {
+    return (
+      <div className={clsx('inline-flex items-center gap-2 rounded-lg', colorStyles[color], sizeStyles[size], className)}>
+        <Icon className="w-4 h-4" />
+        <span className="font-semibold">{label}</span>
+      </div>
+    );
+  }
+  
   return (
     <span className={clsx('badge', variants[variant], className)}>{children}</span>
   );

@@ -1,6 +1,32 @@
 const playlistService = require('../services/playlistService');
 
 class PlaylistController {
+  async getAllPlaylistsAdmin(req, res, next) {
+    try {
+      const { page, limit, search, isPublic, isActive, sortBy, sortOrder } = req.query;
+      const result = await playlistService.getAllPlaylistsAdmin({
+        page: parseInt(page) || 1,
+        limit: parseInt(limit) || 10,
+        search: search || '',
+        isPublic: isPublic ? isPublic === 'true' : undefined,
+        isActive: isActive ? isActive === 'true' : undefined,
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc',
+      });
+      res.status(200).json({ success: true, ...result });
+    } catch (error) { next(error); }
+  }
+
+  // Admin moderation endpoint
+  async setPlaylistStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { isActive, isPublic } = req.body;
+      const result = await playlistService.setPlaylistStatus(id, { isActive, isPublic });
+      res.status(200).json({ success: true, data: result });
+    } catch (error) { next(error); }
+  }
+
   async createPlaylist(req, res, next) {
     try {
       const authToken = req.headers.authorization?.split(' ')[1];

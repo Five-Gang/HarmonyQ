@@ -224,6 +224,83 @@ class PlaylistService {
     const allIds = [...new Set(playlists.flatMap((p) => p.songIds))];
     return allIds;
   }
+
+  /**
+   * Set playlist status (admin moderation)
+   */
+  async setPlaylistStatus(id, { isActive, isPublic }) {
+    const playlist = await Playlist.findById(id);
+    if (!playlist) {
+      const err = new Error('Playlist not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (isActive !== undefined) {
+      playlist.isActive = isActive;
+    }
+    if (isPublic !== undefined) {
+      playlist.isPublic = isPublic;
+    }
+
+    await playlist.save();
+    logger.info('Playlist status updated (admin)', { playlistId: id, isActive, isPublic });
+    return playlist.toJSON();
+  }
+
+  /**
+   * Get all playlists (admin endpoint - includes all public + private)
+   */
+  async getAllPlaylistsAdmin({
+    page = 1,
+    limit = 10,
+    search = '',
+    isPublic = undefined,
+    isActive = undefined,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = {}) {
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build query
+    const query = {};
+
+    // Filter by search (name or owner ID)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { clerkUserId: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Filter by public/private status
+    if (isPublic !== undefined) {
+      query.isPublic = isPublic;
+    }
+
+    // Filter by active status
+    if (isActive !== undefined) {
+      query.isActive = isActive;
+    }
+
+    // Build sort object
+    const sort = {};
+    const validSortFields = ['createdAt', 'updatedAt', 'name', 'followerCount', 'songCount'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    sort[sortField] = sortOrder === 'asc' ? 1 : -1;
+
+    const [playlists, total] = await Promise.all([
+      Playlist.find(query).sort(sort).skip(skip).limit(limitNum).lean(),
+      Playlist.countDocuments(query),
+    ]);
+
+    return {
+      playlists,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    };
+  }
 }
 
 module.exports = new PlaylistService();

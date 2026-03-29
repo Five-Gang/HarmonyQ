@@ -12,6 +12,75 @@ const { authenticate } = require('../middleware/auth');
 
 /**
  * @swagger
+ * /playlists/admin/all:
+ *   get:
+ *     summary: Get all playlists (admin only - all public + private)
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: isPublic
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Array of all playlists with pagination
+ */
+router.get('/admin/all', authenticate, playlistController.getAllPlaylistsAdmin);
+
+/**
+ * @swagger
+ * /playlists/{id}/admin/status:
+ *   put:
+ *     summary: Set playlist status (admin moderation)
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *               isPublic:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Playlist status updated
+ */
+router.put('/:id/admin/status', authenticate, playlistController.setPlaylistStatus);
+
+/**
+ * @swagger
  * /playlists/public/browse:
  *   get:
  *     summary: Get all public playlists (browsable)
