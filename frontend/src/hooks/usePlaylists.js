@@ -23,6 +23,37 @@ export const usePublicPlaylists = (params) =>
     staleTime: 1000 * 60 * 5,
   });
 
+export const useFollowingPlaylists = (params) =>
+  useQuery({
+    queryKey: ['playlists', 'following', params],
+    queryFn: () => playlistService.getFollowingPlaylists(params),
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useAdminPlaylists = (params) =>
+  useQuery({
+    queryKey: ['playlists', 'admin', params],
+    queryFn: () => playlistService.getAllPlaylistsAdmin(params),
+    staleTime: 1000 * 30, // Re-fetch every 30 seconds for admin views
+  });
+
+export const useSetPlaylistStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => playlistService.setPlaylistStatus(id, data),
+    onSuccess: (_, { id, data }) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', id] });
+      toast.success(
+        data.isActive !== undefined
+          ? (data.isActive ? 'Playlist activated' : 'Playlist deactivated')
+          : (data.isPublic ? 'Playlist is now public' : 'Playlist is now private')
+      );
+    },
+    onError: (err) => toast.error(err.message),
+  });
+};
+
 export const useCreatePlaylist = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -136,5 +167,85 @@ export const useDuplicatePlaylist = () => {
       return data;
     },
     onError: (err) => toast.error(err.message),
+  });
+};
+
+export const useFollowPlaylist = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (playlistId) => playlistService.followPlaylist(playlistId),
+    onMutate: (playlistId) => {
+      // Optimistically update all playlist queries
+      queryClient.setQueriesData(
+        { queryKey: ['playlists'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            playlists: old.playlists?.map(p =>
+              p._id === playlistId ? { ...p, isFollowing: true, followerCount: (p.followerCount || 0) + 1 } : p
+            ),
+          };
+        }
+      );
+    },
+    onSuccess: (_, playlistId) => {
+      // Invalidate relevant queries to ensure sync with server
+      queryClient.invalidateQueries({ queryKey: ['playlists', playlistId] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'public'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'following'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'admin'] });
+      toast.success('Playlist followed!');
+    },
+    onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists'] });
+      toast.error(err.response?.data?.message || err.message);
+    },
+  });
+};
+
+export const useUnfollowPlaylist = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (playlistId) => playlistService.unfollowPlaylist(playlistId),
+    onMutate: (playlistId) => {
+      // Optimistically update all playlist queries
+      queryClient.setQueriesData(
+        { queryKey: ['playlists'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            playlists: old.playlists?.map(p =>
+              p._id === playlistId ? { ...p, isFollowing: false, followerCount: Math.max(0, (p.followerCount || 1) - 1) } : p
+            ),
+          };
+        }
+      );
+    },
+    onSuccess: (_, playlistId) => {
+      // Invalidate relevant queries to ensure sync with server
+      queryClient.invalidateQueries({ queryKey: ['playlists', playlistId] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'public'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'following'] });
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'admin'] });
+      toast.success('Playlist unfollowed');
+    },
+    onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists'] });
+      toast.error(err.response?.data?.message || err.message);
+    },
+  });
+};
+
+export const useDeletePlaylistAdmin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (playlistId) => playlistService.deletePlaylistAdmin(playlistId),
+    onSuccess: (_, playlistId) => {
+      queryClient.invalidateQueries({ queryKey: ['playlists', 'admin'] });
+      toast.success('Playlist permanently deleted');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || err.message),
   });
 };

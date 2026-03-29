@@ -1,6 +1,32 @@
 const playlistService = require('../services/playlistService');
 
 class PlaylistController {
+  async getAllPlaylistsAdmin(req, res, next) {
+    try {
+      const { page, limit, search, isPublic, isActive, sortBy, sortOrder } = req.query;
+      const result = await playlistService.getAllPlaylistsAdmin({
+        page: parseInt(page) || 1,
+        limit: parseInt(limit) || 10,
+        search: search || '',
+        isPublic: isPublic ? isPublic === 'true' : undefined,
+        isActive: isActive ? isActive === 'true' : undefined,
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc',
+      });
+      res.status(200).json({ success: true, ...result });
+    } catch (error) { next(error); }
+  }
+
+  // Admin moderation endpoint
+  async setPlaylistStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { isActive, isPublic } = req.body;
+      const result = await playlistService.setPlaylistStatus(id, { isActive, isPublic });
+      res.status(200).json({ success: true, data: result });
+    } catch (error) { next(error); }
+  }
+
   async createPlaylist(req, res, next) {
     try {
       const authToken = req.headers.authorization?.split(' ')[1];
@@ -22,7 +48,7 @@ class PlaylistController {
   async getPublicPlaylists(req, res, next) {
     try {
       const { page, limit } = req.query;
-      const result = await playlistService.getPublicPlaylists({ page, limit });
+      const result = await playlistService.getPublicPlaylists(req.auth.userId, { page, limit });
       res.status(200).json({ success: true, ...result });
     } catch (error) { next(error); }
   }
@@ -69,6 +95,40 @@ class PlaylistController {
     try {
       const playlist = await playlistService.reorderSongs(req.params.id, req.auth.userId, req.body.songIds);
       res.status(200).json({ success: true, data: playlist });
+    } catch (error) { next(error); }
+  }
+
+  async followPlaylist(req, res, next) {
+    try {
+      const result = await playlistService.followPlaylist(req.params.id, req.auth.userId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) { next(error); }
+  }
+
+  async unfollowPlaylist(req, res, next) {
+    try {
+      const result = await playlistService.unfollowPlaylist(req.params.id, req.auth.userId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) { next(error); }
+  }
+
+  async getFollowingPlaylists(req, res, next) {
+    try {
+      const { page, limit } = req.query;
+      const result = await playlistService.getFollowingPlaylists(req.auth.userId, { page, limit });
+      res.status(200).json({ success: true, ...result });
+    } catch (error) { next(error); }
+  }
+
+  async deletePlaylistPermanently(req, res, next) {
+    try {
+      const isAdmin = req.auth?.roles?.includes('admin') || false;
+      const result = await playlistService.deletePlaylistPermanently(
+        req.params.id,
+        req.auth.userId,
+        isAdmin
+      );
+      res.status(200).json({ success: true, ...result });
     } catch (error) { next(error); }
   }
 

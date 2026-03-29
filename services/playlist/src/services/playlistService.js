@@ -44,7 +44,10 @@ class PlaylistService {
       throw err;
     }
 
-    return playlist;
+    // Add isFollowing flag
+    const isFollowing = playlist.followers?.includes(requestingUserId) || false;
+
+    return { ...playlist, isFollowing };
   }
 
   /**
@@ -66,8 +69,14 @@ class PlaylistService {
       Playlist.countDocuments(query),
     ]);
 
+    // Add isFollowing flag to each playlist
+    const playlistsWithFlag = playlists.map(p => ({ 
+      ...p, 
+      isFollowing: p.followers?.includes(requestingUserId) || false 
+    }));
+
     return {
-      playlists,
+      playlists: playlistsWithFlag,
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     };
   }
@@ -75,7 +84,7 @@ class PlaylistService {
   /**
    * Get all public playlists (browse all public playlists)
    */
-  async getPublicPlaylists({ page = 1, limit = 20 } = {}) {
+  async getPublicPlaylists(clerkUserId, { page = 1, limit = 20 } = {}) {
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(50, parseInt(limit));
     const skip = (pageNum - 1) * limitNum;
@@ -87,8 +96,14 @@ class PlaylistService {
       Playlist.countDocuments(query),
     ]);
 
+    // Add isFollowing flag to each playlist
+    const playlistsWithFlag = playlists.map(p => ({ 
+      ...p, 
+      isFollowing: p.followers?.includes(clerkUserId) || false 
+    }));
+
     return {
-      playlists,
+      playlists: playlistsWithFlag,
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     };
   }
@@ -158,7 +173,16 @@ class PlaylistService {
     }
 
     const validIds = await validateSongIds(songIds, authToken);
+    const duplicateIds = validIds.filter((id) => playlist.songIds.includes(id));
     const newIds = validIds.filter((id) => !playlist.songIds.includes(id));
+    
+    // If all songs are duplicates, return specific message
+    if (newIds.length === 0) {
+      const err = new Error('This song is already in this playlist');
+      err.statusCode = 409;
+      throw err;
+    }
+
     playlist.songIds.push(...newIds);
 
     if (playlist.songIds.length > 500) {
@@ -223,6 +247,169 @@ class PlaylistService {
     const playlists = await Playlist.find({ clerkUserId, isActive: true }).select('songIds').lean();
     const allIds = [...new Set(playlists.flatMap((p) => p.songIds))];
     return allIds;
+  }
+
+  /**
+   * Set playlist status (admin moderation)
+   */
+  async setPlaylistStatus(id, { isActive, isPublic }) {
+    const playlist = await Playlist.findById(id);
+    if (!playlist) {
+      const err = new Error('Playlist not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (isActive !== undefined) {
+      playlist.isActive = isActive;
+    }
+    if (isPublic !== undefined) {
+      playlist.isPublic = isPublic;
+    }
+
+    await playlist.save();
+    logger.info('Playlist status updated (admin)', { playlistId: id, isActive, isPublic });
+    return playlist.toJSON();
+  }
+
+  /**
+   * Get all playlists (admin endpoint - includes all public + private)
+   */
+  async getAllPlaylistsAdmin({
+    page = 1,
+    limit = 10,
+    search = '',
+    isPublic = undefined,
+    isActive = undefined,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = {}) {
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build query
+    const query = {};
+
+    // Filter by search (name or owner ID)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { clerkUserId: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Filter by public/private status
+    if (isPublic !== undefined) {
+      query.isPublic = isPublic;
+    }
+
+    // Filter by active status
+    if (isActive !== undefined) {
+      query.isActive = isActive;
+    }
+
+    // Build sort object
+    const sort = {};
+    const validSortFields = ['createdAt', 'updatedAt', 'name', 'followerCount', 'songCount'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    sort[sortField] = sortOrder === 'asc' ? 1 : -1;
+
+    const [playlists, total] = await Promise.all([
+      Playlist.find(query).sort(sort).skip(skip).limit(limitNum).lean(),
+      Playlist.countDocuments(query),
+    ]);
+
+    return {
+      playlists,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    };
+  }
+
+  async followPlaylist(playlistId, clerkUserId) {
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    // Check if already following
+    if (playlist.followers.includes(clerkUserId)) {
+      throw new Error('Already following this playlist');
+    }
+
+    // Add user to followers
+    playlist.followers.push(clerkUserId);
+    playlist.followerCount += 1;
+    await playlist.save();
+
+    return { success: true, followerCount: playlist.followerCount };
+  }
+
+  /**
+   * Permanently delete a playlist (admin or owner)
+   */
+  async deletePlaylistPermanently(id, requestingUserId, isAdmin = false) {
+    const playlist = await Playlist.findById(id);
+    if (!playlist) {
+      const err = new Error('Playlist not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Check if user is owner or admin
+    if (playlist.clerkUserId !== requestingUserId && !isAdmin) {
+      const err = new Error('Only the owner or an admin can delete this playlist');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    await Playlist.deleteOne({ _id: id });
+    logger.info('Playlist permanently deleted', { playlistId: id, deletedBy: requestingUserId, isAdmin });
+    return { message: 'Playlist permanently deleted' };
+  }
+
+  async getFollowingPlaylists(clerkUserId, { page = 1, limit = 20 } = {}) {
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, parseInt(limit));
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = { 
+      followers: clerkUserId,
+      isActive: true,
+      isPublic: true 
+    };
+
+    const [playlists, total] = await Promise.all([
+      Playlist.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Playlist.countDocuments(query),
+    ]);
+
+    // Add isFollowing flag to all playlists (will be true for all since we filtered by followers array)
+    const playlistsWithFlag = playlists.map(p => ({ ...p, isFollowing: true }));
+
+    return {
+      playlists: playlistsWithFlag,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    };
+  }
+
+  async unfollowPlaylist(playlistId, clerkUserId) {
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    // Check if following
+    if (!playlist.followers.includes(clerkUserId)) {
+      throw new Error('Not following this playlist');
+    }
+
+    // Remove user from followers
+    playlist.followers = playlist.followers.filter(id => id !== clerkUserId);
+    playlist.followerCount = Math.max(0, playlist.followerCount - 1);
+    await playlist.save();
+
+    return { success: true, followerCount: playlist.followerCount };
   }
 }
 

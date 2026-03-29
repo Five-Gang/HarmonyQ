@@ -1,8 +1,8 @@
 import { useUser } from '@clerk/clerk-react';
 import { Link } from 'react-router-dom';
 import { Music2, ListMusic, Star, TrendingUp, Clock, Headphones } from 'lucide-react';
-import { useTrendingSongs } from '../hooks/useSongs';
-import { useUserPlaylists } from '../hooks/usePlaylists';
+import { useTrendingSongs, useSongs } from '../hooks/useSongs';
+import { useUserPlaylists, usePublicPlaylists } from '../hooks/usePlaylists';
 import { useRecommendations } from '../hooks/useUser';
 import { SongRow } from '../components/songs/SongCard.jsx';
 import { PlaylistCard } from '../components/playlists/PlaylistCard.jsx';
@@ -26,10 +26,19 @@ export default function DashboardPage() {
 
   const { data: trendingData, isLoading: trendingLoading } = useTrendingSongs(5);
   const { data: playlistsData, isLoading: playlistsLoading } = useUserPlaylists(clerkUserId);
+  const { data: publicPlaylistsData } = usePublicPlaylists({ limit: 1 });
+  const { data: allSongsData } = useSongs({ limit: 1 });
   const { data: recsData } = useRecommendations(clerkUserId);
 
   const trending = trendingData?.data || [];
-  const playlists = playlistsData?.playlists || [];
+  const userPlaylists = playlistsData?.playlists || [];
+  const publicPlaylists = publicPlaylistsData?.playlists || [];
+  const userPlaylistCount = playlistsData?.pagination?.total || 0; // All user's playlists (private + public)
+  const allPublicPlaylistCount = publicPlaylistsData?.pagination?.total || 0; // All public playlists in system
+  const userPublicPlaylistCount = userPlaylists.filter(p => p.isPublic).length; // User's public playlists only
+  // Total visible = User's all playlists + Other users' public playlists
+  const totalPlaylistsCount = userPlaylistCount + Math.max(0, allPublicPlaylistCount - userPublicPlaylistCount);
+  const totalSongsCount = allSongsData?.pagination?.total || 0;
   const recs = recsData?.recommendations?.slice(0, 4) || [];
 
   const hour = new Date().getHours();
@@ -64,8 +73,8 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={ListMusic} value={playlists.length} label="Playlists" color="bg-brand-600" />
-        <StatCard icon={Music2} value={playlists.reduce((a, p) => a + (p.songIds?.length || 0), 0)} label="Total Songs" color="bg-accent-600" />
+        <StatCard icon={ListMusic} value={totalPlaylistsCount} label="Total Playlists" color="bg-brand-600" />
+        <StatCard icon={Music2} value={totalSongsCount} label="Total Songs" color="bg-accent-600" />
         <StatCard icon={Star} value={recsData?.recommendations?.length || 0} label="Recommendations" color="bg-emerald-600" />
         <StatCard icon={TrendingUp} value={trending[0]?.playCount?.toLocaleString() || '—'} label="Top Track Plays" color="bg-orange-600" />
       </div>
@@ -105,7 +114,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-4">
               <SkeletonCard /><SkeletonCard />
             </div>
-          ) : playlists.length === 0 ? (
+          ) : userPlaylists.length === 0 ? (
             <div className="card p-8 text-center">
               <ListMusic className="w-8 h-8 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-400 text-sm">No playlists yet.</p>
@@ -113,7 +122,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {playlists.slice(0, 4).map((pl) => (
+              {userPlaylists.slice(0, 4).map((pl) => (
                 <PlaylistCard key={pl._id} playlist={pl} />
               ))}
             </div>

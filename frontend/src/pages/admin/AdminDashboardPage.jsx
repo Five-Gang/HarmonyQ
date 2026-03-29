@@ -5,6 +5,7 @@ import {
   ArrowUpRight, Clock, Activity, BarChart3, Star
 } from 'lucide-react';
 import { useSongs, useTrendingSongs } from '../../hooks/useSongs';
+import { useAdminPlaylists } from '../../hooks/usePlaylists';
 import { SongRow } from '../../components/songs/SongCard.jsx';
 import { SkeletonList } from '../../components/ui/LoadingStates.jsx';
 
@@ -55,9 +56,11 @@ const QuickActionCard = ({ icon: Icon, title, description, to, gradient }) => (
 export default function AdminDashboardPage() {
   const { user } = useUser();
   const { data: songsData } = useSongs({ page: 1, limit: 1 });
+  const { data: playlistsData } = useAdminPlaylists({ page: 1, limit: 1 });
   const { data: trendingData, isLoading: trendingLoading } = useTrendingSongs(5);
 
   const totalSongs = songsData?.pagination?.total || 0;
+  const totalPlaylists = playlistsData?.pagination?.total || 0;
   const trending = trendingData?.data || [];
 
   const hour = new Date().getHours();
@@ -92,7 +95,7 @@ export default function AdminDashboardPage() {
         />
         <StatCard
           icon={ListMusic}
-          value="—"
+          value={totalPlaylists.toLocaleString()}
           label="Total Playlists"
           gradient="linear-gradient(135deg, #a855f7, #9333ea)"
           to="/admin/playlists"

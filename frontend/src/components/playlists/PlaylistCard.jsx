@@ -1,15 +1,23 @@
-import { useState } from 'react';
-import { ListMusic, Lock, Globe, MoreVertical, Music, Trash2, Edit, Copy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ListMusic, Lock, Globe, MoreVertical, Music, Trash2, Edit, Copy, Heart } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Badge } from '../ui/index.jsx';
-import { useDeletePlaylist, useDuplicatePlaylist } from '../../hooks/usePlaylists';
+import { useDeletePlaylist, useDuplicatePlaylist, useFollowPlaylist, useUnfollowPlaylist } from '../../hooks/usePlaylists';
 import { useNavigate } from 'react-router-dom';
 
 export const PlaylistCard = ({ playlist, onEdit }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isFollowed, setIsFollowed] = useState(playlist?.isFollowing || false);
   const deletePlaylist = useDeletePlaylist();
   const duplicatePlaylist = useDuplicatePlaylist();
+  const followPlaylist = useFollowPlaylist();
+  const unfollowPlaylist = useUnfollowPlaylist();
   const navigate = useNavigate();
+
+  // Sync follow status when playlist prop changes
+  useEffect(() => {
+    setIsFollowed(playlist?.isFollowing || false);
+  }, [playlist?.isFollowing]);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -23,6 +31,19 @@ export const PlaylistCard = ({ playlist, onEdit }) => {
     e.stopPropagation();
     duplicatePlaylist.mutate({ playlistId: playlist._id, playlist });
     setMenuOpen(false);
+  };
+
+  const handleFollow = (e) => {
+    e.stopPropagation();
+    if (isFollowed) {
+      unfollowPlaylist.mutate(playlist._id, {
+        onSuccess: () => setIsFollowed(false),
+      });
+    } else {
+      followPlaylist.mutate(playlist._id, {
+        onSuccess: () => setIsFollowed(true),
+      });
+    }
   };
 
   return (
@@ -72,9 +93,28 @@ export const PlaylistCard = ({ playlist, onEdit }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
-          <ListMusic className="w-3.5 h-3.5" />
-          <span>{playlist.songIds?.length || 0} songs</span>
+        <div className="flex items-center justify-between gap-2 mt-3">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <ListMusic className="w-3.5 h-3.5" />
+            <span>{playlist.songIds?.length || 0} songs</span>
+            <span className="text-slate-600">•</span>
+            <span>{playlist.followerCount || 0} followers</span>
+          </div>
+          {playlist.isPublic && (
+            <button
+              onClick={handleFollow}
+              disabled={followPlaylist.isPending || unfollowPlaylist.isPending}
+              className={clsx(
+                'px-2 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1',
+                isFollowed
+                  ? 'bg-accent-500/20 text-accent-300 hover:bg-accent-500/30'
+                  : 'bg-slate-500/20 text-slate-300 hover:bg-slate-500/30'
+              )}
+            >
+              <Heart className={clsx('w-3 h-3', isFollowed && 'fill-accent-300')} />
+              {isFollowed ? 'Following' : 'Follow'}
+            </button>
+          )}
         </div>
       </div>
       </div>
