@@ -40,6 +40,10 @@ const playlistSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    followers: {
+      type: [{ type: String }],
+      default: [],
+    },
     isActive: {
       type: Boolean,
       default: true,

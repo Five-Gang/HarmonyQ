@@ -81,6 +81,47 @@ router.put('/:id/admin/status', authenticate, playlistController.setPlaylistStat
 
 /**
  * @swagger
+ * /playlists/{id}/admin/delete:
+ *   delete:
+ *     summary: Permanently delete playlist (admin only)
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Playlist permanently deleted
+ *       403:
+ *         description: Admin access required
+ */
+router.delete('/:id/admin/delete', authenticate, playlistController.deletePlaylistPermanently);
+
+/**
+ * @swagger
+ * /playlists/following:
+ *   get:
+ *     summary: Get all playlists the current user is following
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Array of playlists user is following
+ */
+router.get('/following', authenticate, playlistController.getFollowingPlaylists);
+
+/**
+ * @swagger
  * /playlists/public/browse:
  *   get:
  *     summary: Get all public playlists (browsable)
@@ -264,5 +305,41 @@ router.delete('/:id/songs/:songId', authenticate, playlistController.removeSong)
  *         description: Playlist order updated
  */
 router.put('/:id/songs/reorder', authenticate, playlistController.reorderSongs);
+
+/**
+ * @swagger
+ * /playlists/{id}/follow:
+ *   post:
+ *     summary: Follow a playlist
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Playlist followed
+ */
+router.post('/:id/follow', authenticate, playlistController.followPlaylist);
+
+/**
+ * @swagger
+ * /playlists/{id}/unfollow:
+ *   post:
+ *     summary: Unfollow a playlist
+ *     tags: [Playlists]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Playlist unfollowed
+ */
+router.post('/:id/unfollow', authenticate, playlistController.unfollowPlaylist);
 
 module.exports = router;

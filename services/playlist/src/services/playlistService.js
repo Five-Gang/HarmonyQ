@@ -44,7 +44,10 @@ class PlaylistService {
       throw err;
     }
 
-    return playlist;
+    // Add isFollowing flag
+    const isFollowing = playlist.followers?.includes(requestingUserId) || false;
+
+    return { ...playlist, isFollowing };
   }
 
   /**
@@ -66,8 +69,14 @@ class PlaylistService {
       Playlist.countDocuments(query),
     ]);
 
+    // Add isFollowing flag to each playlist
+    const playlistsWithFlag = playlists.map(p => ({ 
+      ...p, 
+      isFollowing: p.followers?.includes(requestingUserId) || false 
+    }));
+
     return {
-      playlists,
+      playlists: playlistsWithFlag,
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     };
   }
@@ -75,7 +84,7 @@ class PlaylistService {
   /**
    * Get all public playlists (browse all public playlists)
    */
-  async getPublicPlaylists({ page = 1, limit = 20 } = {}) {
+  async getPublicPlaylists(clerkUserId, { page = 1, limit = 20 } = {}) {
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(50, parseInt(limit));
     const skip = (pageNum - 1) * limitNum;
@@ -87,8 +96,14 @@ class PlaylistService {
       Playlist.countDocuments(query),
     ]);
 
+    // Add isFollowing flag to each playlist
+    const playlistsWithFlag = playlists.map(p => ({ 
+      ...p, 
+      isFollowing: p.followers?.includes(clerkUserId) || false 
+    }));
+
     return {
-      playlists,
+      playlists: playlistsWithFlag,
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     };
   }
@@ -300,6 +315,92 @@ class PlaylistService {
       playlists,
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     };
+  }
+
+  async followPlaylist(playlistId, clerkUserId) {
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    // Check if already following
+    if (playlist.followers.includes(clerkUserId)) {
+      throw new Error('Already following this playlist');
+    }
+
+    // Add user to followers
+    playlist.followers.push(clerkUserId);
+    playlist.followerCount += 1;
+    await playlist.save();
+
+    return { success: true, followerCount: playlist.followerCount };
+  }
+
+  /**
+   * Permanently delete a playlist (admin or owner)
+   */
+  async deletePlaylistPermanently(id, requestingUserId, isAdmin = false) {
+    const playlist = await Playlist.findById(id);
+    if (!playlist) {
+      const err = new Error('Playlist not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Check if user is owner or admin
+    if (playlist.clerkUserId !== requestingUserId && !isAdmin) {
+      const err = new Error('Only the owner or an admin can delete this playlist');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    await Playlist.deleteOne({ _id: id });
+    logger.info('Playlist permanently deleted', { playlistId: id, deletedBy: requestingUserId, isAdmin });
+    return { message: 'Playlist permanently deleted' };
+  }
+
+  async getFollowingPlaylists(clerkUserId, { page = 1, limit = 20 } = {}) {
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, parseInt(limit));
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = { 
+      followers: clerkUserId,
+      isActive: true,
+      isPublic: true 
+    };
+
+    const [playlists, total] = await Promise.all([
+      Playlist.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Playlist.countDocuments(query),
+    ]);
+
+    // Add isFollowing flag to all playlists (will be true for all since we filtered by followers array)
+    const playlistsWithFlag = playlists.map(p => ({ ...p, isFollowing: true }));
+
+    return {
+      playlists: playlistsWithFlag,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    };
+  }
+
+  async unfollowPlaylist(playlistId, clerkUserId) {
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    // Check if following
+    if (!playlist.followers.includes(clerkUserId)) {
+      throw new Error('Not following this playlist');
+    }
+
+    // Remove user from followers
+    playlist.followers = playlist.followers.filter(id => id !== clerkUserId);
+    playlist.followerCount = Math.max(0, playlist.followerCount - 1);
+    await playlist.save();
+
+    return { success: true, followerCount: playlist.followerCount };
   }
 }
 

@@ -2,9 +2,9 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   ListMusic, Search, Filter, X, Eye, EyeOff,
   Music2, Users, CheckCircle, AlertCircle, MoreVertical, Lock, Unlock, 
-  User, Copy, ExternalLink, Clock, Calendar, History
+  User, Copy, ExternalLink, Clock, Calendar, History, Trash2
 } from 'lucide-react';
-import { useAdminPlaylists, useSetPlaylistStatus } from '../../hooks/usePlaylists';
+import { useAdminPlaylists, useSetPlaylistStatus, useDeletePlaylistAdmin } from '../../hooks/usePlaylists';
 import { SearchBar, Pagination, Badge, Modal } from '../../components/ui/index.jsx';
 import { SkeletonList, EmptyState, ErrorState } from '../../components/ui/LoadingStates.jsx';
 import toast from 'react-hot-toast';
@@ -54,6 +54,7 @@ export default function AdminPlaylistsPage() {
   const [selectedPlaylists, setSelectedPlaylists] = useState(new Set());
   const [bulkAction, setBulkAction] = useState(null);
   const [auditPlaylist, setAuditPlaylist] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const { data, isLoading, error, refetch } = useAdminPlaylists({
     page,
@@ -66,6 +67,7 @@ export default function AdminPlaylistsPage() {
   });
 
   const setPlaylistStatus = useSetPlaylistStatus();
+  const deletePlaylistAdmin = useDeletePlaylistAdmin();
 
   const playlists = data?.playlists || [];
   const pagination = data?.pagination;
@@ -115,6 +117,16 @@ export default function AdminPlaylistsPage() {
         id: playlist._id,
         data: { isPublic: !playlist.isPublic }
       });
+      setOpenMenu(null);
+    } catch (err) {
+      // error handled by hook
+    }
+  };
+
+  const handleDeletePlaylist = async (playlist) => {
+    try {
+      await deletePlaylistAdmin.mutateAsync(playlist._id);
+      setDeleteConfirm(null);
       setOpenMenu(null);
     } catch (err) {
       // error handled by hook
@@ -413,82 +425,71 @@ export default function AdminPlaylistsPage() {
       ) : (
         <div className="space-y-3">
           {/* Table Header - Desktop */}
-          <div className="hidden md:grid md:grid-cols-[auto_2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 bg-gradient-to-r from-surface-1 to-surface-2 rounded-t-2xl border border-b border-white/10 text-xs font-bold text-slate-400 uppercase tracking-widest">
-            <input
-              type="checkbox"
-              checked={selectedPlaylists.size === playlists.length && playlists.length > 0}
-              onChange={handleSelectAll}
-              className="w-4 h-4 rounded cursor-pointer accent-accent-500 hover:accent-accent-400 transition-all"
-              title="Select all playlists on this page"
-            />
-            <span>Playlist</span>
-            <span>Owner</span>
-            <span className="text-center">Status</span>
-            <span className="text-right">Stats</span>
-            <span className="text-right">Actions</span>
+          <div className="hidden md:grid md:grid-cols-[40px_1.5fr_1.3fr_0.8fr_0.8fr_0.8fr_100px] gap-0 px-0 py-0 bg-gradient-to-r from-surface-2 to-surface-1 rounded-t-xl text-xs font-bold text-slate-300 uppercase tracking-widest overflow-hidden">
+            <div className="px-4 py-4 flex items-center justify-center border-r border-white/[0.08]">
+              <input
+                type="checkbox"
+                checked={selectedPlaylists.size === playlists.length && playlists.length > 0}
+                onChange={handleSelectAll}
+                className="w-4 h-4 rounded cursor-pointer accent-accent-500 hover:accent-accent-400 transition-all"
+                title="Select all playlists on this page"
+              />
+            </div>
+            <div className="px-4 py-4">Playlist</div>
+            <div className="px-4 py-4">Owner</div>
+            <div className="px-4 py-4 text-center">Status</div>
+            <div className="px-4 py-4 text-center">Songs</div>
+            <div className="px-4 py-4 text-center">Followers</div>
+            <div className="px-4 py-4 text-center">Actions</div>
           </div>
 
           {/* Playlist Rows */}
-          <div className="rounded-2xl bg-surface-1 border border-white/5 overflow-hidden shadow-xl">
+          <div className="rounded-xl bg-surface-1 border border-white/5 overflow-hidden shadow-xl">
             {playlists.map((playlist, idx) => (
               <div
                 key={playlist._id}
-                className={`grid grid-cols-1 md:grid-cols-[auto_2fr_1fr_1fr_1fr_auto] gap-4 items-center px-6 py-4 ${
-                  idx !== playlists.length - 1 ? 'border-b border-white/[0.05]' : ''
-                } hover:bg-surface-2/50 transition-all duration-150 group ${
-                  selectedPlaylists.has(playlist._id) ? 'bg-accent-500/10 hover:bg-accent-500/15' : ''
+                className={`hidden md:grid md:grid-cols-[40px_1.5fr_1.3fr_0.8fr_0.8fr_0.8fr_100px] gap-0 items-center ${
+                  idx !== playlists.length - 1 ? '' : ''
+                } hover:bg-accent-500/5 transition-colors duration-150 group ${
+                  selectedPlaylists.has(playlist._id) ? 'bg-accent-500/10' : ''
                 }`}
               >
                 {/* Checkbox */}
-                <input
-                  type="checkbox"
-                  checked={selectedPlaylists.has(playlist._id)}
-                  onChange={() => handleSelectPlaylist(playlist._id)}
-                  className="w-4 h-4 rounded cursor-pointer accent-accent-500 hidden md:block hover:accent-accent-400 transition-all"
-                  title="Select this playlist"
-                />
+                <div className="px-4 py-4 flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedPlaylists.has(playlist._id)}
+                    onChange={() => handleSelectPlaylist(playlist._id)}
+                    className="w-4 h-4 rounded cursor-pointer accent-accent-500 hover:accent-accent-400 transition-all"
+                    title="Select this playlist"
+                  />
+                </div>
 
                 {/* Playlist Info */}
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <ListMusic className="w-5 h-5 text-accent-400" />
+                <div className="px-4 py-4 flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center flex-shrink-0">
+                    <ListMusic className="w-4 h-4 text-accent-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-white truncate">{playlist.name}</p>
-                      {/* Activity Badges */}
-                      {getTimeAgo(playlist.updatedAt) === 'just now' && (
-                        <Badge icon={CheckCircle} label="Just Updated" color="green" size="sm" />
-                      )}
-                      {playlist.followerCount > 100 && (
-                        <Badge label="Popular" color="amber" size="sm" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">{playlist.description || 'No description'}</p>
-                    <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
-                      <Clock className="w-3 h-3" />
-                      <span>Updated {getTimeAgo(playlist.updatedAt)}</span>
-                      <span>•</span>
-                      <span>Created {formatDate(playlist.createdAt)}</span>
-                    </div>
+                    <p className="text-sm font-semibold text-white truncate">{playlist.name}</p>
+                    <p className="text-xs text-slate-500 truncate">{playlist.description || '—'}</p>
                   </div>
                 </div>
 
-                {/* Owner (Hidden on mobile) */}
-                <div className="hidden md:block min-w-0">
+                {/* Owner */}
+                <div className="px-4 py-4 min-w-0">
                   <button
                     onClick={() => setSelectedOwner(playlist.clerkUserId)}
-                    className="text-sm text-accent-400 hover:text-accent-300 truncate font-mono text-[11px] hover:underline transition-colors flex items-center gap-1 group/owner"
-                    title="View owner details"
+                    className="text-xs text-accent-400 hover:text-accent-300 truncate font-mono hover:underline transition-colors w-full text-left"
+                    title={playlist.clerkUserId}
                   >
-                    <User className="w-3 h-3 opacity-0 group-hover/owner:opacity-100 transition-opacity" />
-                    {playlist.clerkUserId}
+                    {playlist.clerkUserId.substring(0, 24)}...
                   </button>
                 </div>
 
                 {/* Status */}
-                <div className="hidden md:flex items-center gap-2">
-                  <div className="flex flex-col gap-1">
+                <div className="px-4 py-4">
+                  <div className="flex flex-col gap-2">
                     {!playlist.isActive && (
                       <Badge
                         icon={AlertCircle}
@@ -506,20 +507,24 @@ export default function AdminPlaylistsPage() {
                   </div>
                 </div>
 
-                {/* Song & Follower Count */}
-                <div className="hidden md:flex flex-col items-start gap-1">
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <Music2 className="w-4 h-4" />
+                {/* Songs Count */}
+                <div className="px-4 py-4 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-slate-300">
+                    <Music2 className="w-4 h-4 text-accent-400" />
                     <span className="text-sm font-semibold">{playlist.songIds?.length || 0}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <Users className="w-4 h-4" />
+                </div>
+
+                {/* Followers Count */}
+                <div className="px-4 py-4 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-slate-300">
+                    <Users className="w-4 h-4 text-brand-400" />
                     <span className="text-sm font-semibold">{(playlist.followerCount || 0).toLocaleString()}</span>
                   </div>
                 </div>
 
                 {/* Actions Menu */}
-                <div className="flex items-center justify-end gap-1 relative">
+                <div className="px-4 py-4 flex items-center justify-center">
                   <button
                     onClick={() => setOpenMenu(openMenu === playlist._id ? null : playlist._id)}
                     className="p-2 rounded-lg text-slate-500 hover:text-accent-400 hover:bg-accent-500/10 transition-colors"
@@ -576,6 +581,15 @@ export default function AdminPlaylistsPage() {
                           </>
                         )}
                       </button>
+
+                      <button
+                        onClick={() => setDeleteConfirm(playlist)}
+                        disabled={deletePlaylistAdmin.isPending}
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-colors border-t border-white/5 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Permanently Delete
+                      </button>
                     </div>
                   )}
                 </div>
@@ -603,6 +617,127 @@ export default function AdminPlaylistsPage() {
                     </span>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile View - Card Layout */}
+          <div className="md:hidden space-y-3">
+            {playlists.map((playlist) => (
+              <div
+                key={playlist._id}
+                className={`bg-surface-1 border border-white/5 rounded-xl p-4 space-y-3 hover:bg-surface-2 transition-colors ${
+                  selectedPlaylists.has(playlist._id) ? 'border-accent-500/50 bg-accent-500/5' : ''
+                }`}
+              >
+                {/* Header with Checkbox */}
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedPlaylists.has(playlist._id)}
+                    onChange={() => handleSelectPlaylist(playlist._id)}
+                    className="w-4 h-4 rounded cursor-pointer accent-accent-500 mt-1"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{playlist.name}</p>
+                    <p className="text-xs text-slate-500 truncate">{playlist.description || '—'}</p>
+                  </div>
+                  <button
+                    onClick={() => setOpenMenu(openMenu === playlist._id ? null : playlist._id)}
+                    className="p-2 rounded-lg text-slate-500 hover:text-accent-400 hover:bg-accent-500/10 transition-colors flex-shrink-0"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-surface-2 rounded-lg p-2.5 border border-white/5">
+                    <p className="text-slate-400 mb-1">Songs</p>
+                    <p className="text-lg font-bold text-white flex items-center gap-1">
+                      <Music2 className="w-3 h-3 text-accent-400" />
+                      {playlist.songIds?.length || 0}
+                    </p>
+                  </div>
+                  <div className="bg-surface-2 rounded-lg p-2.5 border border-white/5">
+                    <p className="text-slate-400 mb-1">Followers</p>
+                    <p className="text-lg font-bold text-white flex items-center gap-1">
+                      <Users className="w-3 h-3 text-brand-400" />
+                      {(playlist.followerCount || 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status Badges */}
+                <div className="flex flex-wrap gap-2">
+                  {!playlist.isActive && (
+                    <Badge icon={AlertCircle} label="Inactive" color="red" size="sm" />
+                  )}
+                  <Badge
+                    icon={playlist.isPublic ? Eye : EyeOff}
+                    label={playlist.isPublic ? 'Public' : 'Private'}
+                    color={playlist.isPublic ? 'blue' : 'slate'}
+                    size="sm"
+                  />
+                </div>
+
+                {/* Menu Options */}
+                {openMenu === playlist._id && (
+                  <div className="border-t border-white/5 pt-3 flex flex-col gap-2">
+                    <button
+                      onClick={() => {
+                        setAuditPlaylist(playlist);
+                        setOpenMenu(null);
+                      }}
+                      className="text-left px-3 py-2 bg-surface-2 text-slate-300 hover:text-white rounded-lg transition-colors text-xs font-semibold flex items-center gap-2"
+                    >
+                      <History className="w-3 h-3" />
+                      Audit Info
+                    </button>
+                    <button
+                      onClick={() => handleTogglePublic(playlist)}
+                      disabled={setPlaylistStatus.isPending}
+                      className="text-left px-3 py-2 bg-surface-2 text-slate-300 hover:text-white rounded-lg transition-colors text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {playlist.isPublic ? (
+                        <>
+                          <Lock className="w-3 h-3" />
+                          Make Private
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-3 h-3" />
+                          Make Public
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleToggleActive(playlist)}
+                      disabled={setPlaylistStatus.isPending}
+                      className="text-left px-3 py-2 bg-surface-2 text-slate-300 hover:text-white rounded-lg transition-colors text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {playlist.isActive ? (
+                        <>
+                          <AlertCircle className="w-3 h-3" />
+                          Deactivate
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-3 h-3" />
+                          Activate
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(playlist)}
+                      disabled={deletePlaylistAdmin.isPending}
+                      className="text-left px-3 py-2 bg-red-500/10 text-red-300 hover:bg-red-500/20 rounded-lg transition-colors text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -881,6 +1016,63 @@ export default function AdminPlaylistsPage() {
                 className="flex-1 px-4 py-2 bg-surface-2 text-slate-300 rounded-lg hover:bg-surface-3 transition-colors text-sm font-semibold"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <Modal
+          isOpen={!!deleteConfirm}
+          onClose={() => setDeleteConfirm(null)}
+          title="Permanently Delete Playlist?"
+        >
+          <div className="space-y-6">
+            {/* Warning */}
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-red-300">This action cannot be undone</p>
+                <p className="text-xs text-red-200 mt-1">
+                  The playlist "{deleteConfirm.name}" and all its data will be permanently removed from the system.
+                </p>
+              </div>
+            </div>
+
+            {/* Playlist Info */}
+            <div className="bg-surface-2 rounded-lg p-4 space-y-2">
+              <p className="text-sm">
+                <span className="text-slate-500">Playlist:</span>
+                <span className="text-white font-semibold ml-2">{deleteConfirm.name}</span>
+              </p>
+              <p className="text-sm">
+                <span className="text-slate-500">Songs:</span>
+                <span className="text-white font-semibold ml-2">{deleteConfirm.songIds?.length || 0}</span>
+              </p>
+              <p className="text-sm">
+                <span className="text-slate-500">Followers:</span>
+                <span className="text-white font-semibold ml-2">{deleteConfirm.followerCount || 0}</span>
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t border-white/5">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deletePlaylistAdmin.isPending}
+                className="flex-1 px-4 py-2.5 bg-surface-2 text-slate-300 rounded-lg hover:bg-surface-3 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeletePlaylist(deleteConfirm)}
+                disabled={deletePlaylistAdmin.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 rounded-lg transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                {deletePlaylistAdmin.isPending ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>
