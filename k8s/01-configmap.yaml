@@ -12,4 +12,4 @@ data:
   PLAYLIST_URL: "http://playlist-service.melodai.svc.cluster.local:3003"
   
   # CORS
-  CORS_ORIGIN: "http://167.99.26.212"
+  CORS_ORIGIN: "http://134.199.142.86"
