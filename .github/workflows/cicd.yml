@@ -296,7 +296,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save 6e3d2de3-8249-4d19-8d21-ffee5f0aa6de
+        run: doctl kubernetes cluster kubeconfig save ef8015fc-05c5-498d-abce-0a93e92ebb58
 
       - name: Deploy (Rollout Restart)
         run: |
