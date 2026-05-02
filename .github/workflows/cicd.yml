@@ -24,15 +24,12 @@ jobs:
   sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # fetch-depth 0 fetches full history (needed for blame on PRs).
-          # On push to main we only need the tip commit; set to 1 to skip
-          # fetching thousands of commits which bloats runner startup time.
           fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
 
       # Pre-warm Node.js so the Sonar embedded-Node provisioning step is skipped
@@ -40,6 +37,35 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      # Install dependencies and run tests with coverage for each service
+      - name: Test song-catalog
+        run: |
+          cd services/song-catalog
+          npm ci --prefer-offline
+          npm test
+        continue-on-error: false
+
+      - name: Test user-profile
+        run: |
+          cd services/user-profile
+          npm ci --prefer-offline
+          npm test
+        continue-on-error: false
+
+      - name: Test playlist
+        run: |
+          cd services/playlist
+          npm ci --prefer-offline
+          npm test
+        continue-on-error: false
+
+      - name: Test recommendation
+        run: |
+          cd services/recommendation
+          npm ci --prefer-offline
+          npm test
+        continue-on-error: false
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6

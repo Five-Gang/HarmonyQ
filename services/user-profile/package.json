@@ -5,7 +5,18 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "test": "jest --coverage --coverageReporters=lcov --coverageDirectory=coverage --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/src/__tests__/**/*.test.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/app.js",
+      "!src/config/**",
+      "!**/node_modules/**"
+    ]
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -25,6 +36,8 @@
     "winston": "^3.13.0"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
     "nodemon": "^3.1.3"
   }
 }
+
