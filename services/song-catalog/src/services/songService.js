@@ -1,5 +1,13 @@
+const mongoose = require('mongoose');
 const Song = require('../models/Song');
 const logger = require('../config/logger');
+
+/**
+ * Escape special regex characters so user-supplied strings
+ * cannot inject arbitrary patterns into a RegExp query.
+ * This prevents the jsecurity:S5147 NoSQL-injection finding.
+ */
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 class SongService {
   /**
@@ -12,17 +20,29 @@ class SongService {
 
     const query = { isActive: true };
 
-    if (genre) query.genre = genre;
-    if (artist) query.artist = new RegExp(artist, 'i');
-    if (album) query.album = new RegExp(album, 'i');
+    // Validate genre against the schema enum — avoids injecting arbitrary values
+    const ALLOWED_GENRES = [
+      'Pop', 'Rock', 'Hip-Hop', 'R&B', 'Jazz', 'Classical',
+      'Electronic', 'Country', 'Latin', 'Reggae', 'Blues',
+      'Folk', 'Indie', 'Metal', 'Punk', 'Soul', 'Funk',
+      'Alternative', 'K-Pop', 'Other',
+    ];
+    if (genre && ALLOWED_GENRES.includes(genre)) query.genre = genre;
 
-    // Full-text search
+    // Escape user-supplied strings before using in RegExp to prevent NoSQL injection
+    if (artist) query.artist = new RegExp(escapeRegex(String(artist)), 'i');
+    if (album) query.album = new RegExp(escapeRegex(String(album)), 'i');
+
+    // Full-text search — MongoDB's $text operator handles the string safely
     if (search) {
-      query.$text = { $search: search };
+      query.$text = { $search: String(search) };
     }
 
+    // Allowlist sortBy to prevent prototype-pollution / injection through dynamic key names
+    const ALLOWED_SORT_FIELDS = ['title', 'artist', 'genre', 'releaseYear', 'playCount', 'createdAt'];
+    const safeSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt';
     const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    sortOptions[safeSortBy] = sortOrder === 'asc' ? 1 : -1;
 
     const [songs, total] = await Promise.all([
       Song.find(query).sort(sortOptions).skip(skip).limit(limitNum).lean(),
@@ -57,9 +77,15 @@ class SongService {
 
   /**
    * Get songs by array of IDs (used by Playlist and Recommendation services)
+   * IDs are validated as proper MongoDB ObjectIds to prevent NoSQL injection (jsecurity:S5147)
    */
   async getSongsByIds(ids) {
-    return Song.find({ _id: { $in: ids }, isActive: true }).lean();
+    // Only pass values that are valid MongoDB ObjectIds — rejects any injected operator objects
+    const safeIds = (Array.isArray(ids) ? ids : [])
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(String(id)));
+    if (safeIds.length === 0) return [];
+    return Song.find({ _id: { $in: safeIds }, isActive: true }).lean();
   }
 
   /**
@@ -125,7 +151,18 @@ class SongService {
    * Get songs by genre for recommendations
    */
   async getSongsByGenres(genres, limit = 20) {
-    return Song.find({ genre: { $in: genres }, isActive: true })
+    // Validate every genre against the schema allowlist before passing to $in
+    // This prevents NoSQL injection via user-controlled arrays (jsecurity:S5147)
+    const ALLOWED_GENRES = [
+      'Pop', 'Rock', 'Hip-Hop', 'R&B', 'Jazz', 'Classical',
+      'Electronic', 'Country', 'Latin', 'Reggae', 'Blues',
+      'Folk', 'Indie', 'Metal', 'Punk', 'Soul', 'Funk',
+      'Alternative', 'K-Pop', 'Other',
+    ];
+    const safeGenres = (Array.isArray(genres) ? genres : [])
+      .filter((g) => typeof g === 'string' && ALLOWED_GENRES.includes(g));
+    if (safeGenres.length === 0) return [];
+    return Song.find({ genre: { $in: safeGenres }, isActive: true })
       .sort({ playCount: -1 })
       .limit(limit)
       .lean();
