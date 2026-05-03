@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const path = require('path');
@@ -54,6 +55,8 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', metho
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+// Sanitize user input — strips keys containing '$' or '.' to prevent NoSQL injection
+app.use(mongoSanitize());
 app.use(morgan('combined', { stream: { write: (msg) => logger.http(msg.trim()) } }));
 
 app.get('/health', (req, res) => {

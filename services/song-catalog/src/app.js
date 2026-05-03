@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const path = require('path');
@@ -67,6 +68,9 @@ app.use(limiter);
 // Body parsing
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
+// Sanitize user input — strips keys containing '$' or '.' to prevent NoSQL injection
+app.use(mongoSanitize());
 
 // Logging
 app.use(morgan('combined', {
