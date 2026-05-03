@@ -41,9 +41,12 @@ function FloatingCard({ title, artist, gradient, delay, className }) {
     <div
       className={`absolute glass rounded-2xl p-4 shadow-card animate-float ${className}`}
       style={{ animationDelay: `${delay}s` }}
+
+
+
     >
       <div className={`w-12 h-12 rounded-xl ${gradient} flex items-center justify-center mb-2`}>
-        <Music2 className="w-5 h-5 text-white" />
+        <Music2 className="w-5 h-5 text-red" />
       </div>
       <p className="text-sm font-semibold text-white truncate">{title}</p>
       <p className="text-xs text-slate-400">{artist}</p>
@@ -185,8 +188,7 @@ export default function LandingPage() {
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-sm font-medium mb-6 animate-fade-in">
               <Sparkles className="w-4 h-4" />
-              AI-Powered Music Discovery
-            </div>
+Lorem ipsum dolor sit amet consectetur adipisicing elit. At nesciunt fugiat aliquam eligendi ab, dignissimos illo totam, quos officiis mollitia consequuntur blanditiis aperiam atque dicta ipsum qui quaerat reiciendis quisquam!            </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight mb-6 animate-fade-in-up">
               <span className="text-white">Your music,</span>
